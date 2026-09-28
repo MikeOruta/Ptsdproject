@@ -10,8 +10,8 @@ Laptop (write code) --git push--> GitHub --git pull--> PythonAnywhere --> public
 
 PythonAnywhere was chosen because it hosts Flask for free and keeps files between
 restarts, so the SQLite database is not wiped (many free hosts use temporary disks).
-Free-tier limit: log in and click "Run until 3 months from today" on the Web tab
-every 3 months to keep the site running.
+Free-tier limit: log in and click "Run until 1 month from today" on the Web tab
+every month to keep the site running (PythonAnywhere emails a reminder a week before).
 
 ## First-time setup
 
