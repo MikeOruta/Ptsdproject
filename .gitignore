@@ -11,3 +11,6 @@ __pycache__/
 
 # Log files
 *.log
+
+# Trained model files are rebuilt with: python -m ml.train_model
+ml/*.pkl
