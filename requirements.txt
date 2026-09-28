@@ -1,0 +1,7 @@
+flask
+mysql-connector-python
+scikit-learn
+pandas
+joblib
+python-dotenv
+pytest
