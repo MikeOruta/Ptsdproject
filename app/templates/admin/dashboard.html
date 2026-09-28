@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Admin overview{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>System overview</h1><p>Accounts, activity and the prediction model at a glance.</p></div>
+</div>
+
+{% if not model_loaded %}
+<div class="alert alert-error" style="margin-bottom:20px"><strong>Prediction model not loaded.</strong> {{ model_error }}</div>
+{% endif %}
+
+<div class="grid grid-4" style="margin-bottom:20px">
+  <a class="card stat navy" href="{{ url_for('admin.users', role='military_personnel') }}"><div class="label">Service members</div><div class="value">{{ users_by_role.get('military_personnel', 0) }}</div></a>
+  <a class="card stat navy" href="{{ url_for('admin.users', role='therapist') }}"><div class="label">Clinicians</div><div class="value">{{ users_by_role.get('therapist', 0) }}</div></a>
+  <div class="card stat navy"><div class="label">Assessments</div><div class="value">{{ stats.assessments }}</div><div class="hint">{{ stats.today }} today</div></div>
+  <a class="card stat {{ 'high' if stats.failed_logins > 10 else 'navy' }}" href="{{ url_for('admin.logs', action='login_failed') }}"><div class="label">Failed sign-ins (24h)</div><div class="value">{{ stats.failed_logins }}</div></a>
+</div>
+
+<div class="grid grid-2">
+  <div class="card">
+    <div class="card-head"><h2>Active model</h2><a href="{{ url_for('admin.models') }}">Manage models</a></div>
+    {% if model %}
+      <p><span class="status-dot {{ '' if model_loaded else 'off' }}"></span><strong>{{ model.algorithm }}</strong> <span class="pill">{{ model.version }}</span></p>
+      {% if metrics and metrics.test %}
+      <dl class="kv">
+        <dt>Recall</dt><dd>{{ '%.3f'|format(metrics.test.recall) }}</dd>
+        <dt>Precision</dt><dd>{{ '%.3f'|format(metrics.test.precision) }}</dd>
+        <dt>F1-score</dt><dd>{{ '%.3f'|format(metrics.test.f1) }}</dd>
+        <dt>ROC-AUC</dt><dd>{{ '%.3f'|format(metrics.test.roc_auc) }}</dd>
+        <dt>Trained</dt><dd>{{ metrics.trained_at }}</dd>
+      </dl>
+      {% if metrics.data_is_synthetic %}<p class="small" style="margin-top:12px;color:var(--mod)"><strong>Trained on synthetic data:</strong> retrain on approved real data before operational use.</p>{% endif %}
+      {% endif %}
+    {% else %}
+      <p class="muted">No model registered. Run <span class="pill">python -m ml.train_model</span>.</p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Recent activity</h2><a href="{{ url_for('admin.logs') }}">Full audit log</a></div>
+    <div class="table-wrap"><table>
+      <tbody>
+      {% for l in recent %}
+        <tr><td class="nowrap small">{{ l.created_at[5:16] }}</td><td><span class="pill">{{ l.action }}</span></td><td class="small">{{ l.email or '(anonymous)' }}</td></tr>
+      {% else %}
+        <tr><td class="muted">No activity yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+</div>
+{% endblock %}

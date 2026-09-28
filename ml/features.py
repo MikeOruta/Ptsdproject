@@ -25,6 +25,21 @@ CATEGORICAL_FEATURES = {
 }
 
 FEATURES = list(NUMERIC_FEATURES) + list(CATEGORICAL_FEATURES)
+
+# Plain-English names shown to users when explaining a prediction.
+FEATURE_LABELS = {
+    "age": "Age",
+    "deployment_duration_months": "Deployment length",
+    "combat_exposure": "Combat exposure",
+    "prior_trauma": "Prior trauma",
+    "social_isolation": "Social isolation",
+    "sleep_score": "Sleep disturbance",
+    "anxiety_score": "Anxiety (GAD-7)",
+    "depression_score": "Depression (PHQ-9)",
+    "alcohol_use": "Alcohol use (AUDIT)",
+    "gender_female": "Gender (female)",
+    "gender_other": "Gender (other)",
+}
 TARGET = "probable_ptsd"  # 1 = probable PTSD, 0 = not
 
 # Probability cut-offs that turn the model's output into a risk category.

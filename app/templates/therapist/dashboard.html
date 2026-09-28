@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, risk_badge, disclaimer %}
+{% block title %}Caseload{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Caseload</h1><p>Each service member's most recent assessment, highest risk first.</p></div>
+  <a class="btn btn-outline" href="{{ url_for('therapist.report') }}">Summary report</a>
+</div>
+
+<div class="grid grid-3" style="margin-bottom:20px">
+  {% for c, cls, hint in [('High', 'high', 'Prioritise for follow-up'), ('Moderate', 'moderate', 'Consider review'), ('Low', 'low', 'Routine monitoring')] %}
+  <a class="card stat {{ cls }}" href="{{ url_for('therapist.dashboard', risk=c) }}" {% if risk == c %}aria-current="true" style="border-color:var(--navy-600)"{% endif %}>
+    <div class="label">{{ c }} risk</div><div class="value">{{ counts[c] }}</div><div class="hint">{{ hint }}</div>
+  </a>
+  {% endfor %}
+</div>
+
+<div class="card">
+  <form method="get" class="inline-form" style="margin-bottom:16px">
+    <div class="form-row" style="flex:1;min-width:220px">
+      <label for="q">Search</label>
+      <input id="q" name="q" type="search" placeholder="Name or service number" value="{{ search }}">
+    </div>
+    <div class="form-row">
+      <label for="risk">Risk level</label>
+      <select id="risk" name="risk">
+        <option value="">All levels</option>
+        {% for c in ['High', 'Moderate', 'Low'] %}<option {% if risk == c %}selected{% endif %}>{{ c }}</option>{% endfor %}
+      </select>
+    </div>
+    <button class="btn btn-primary" type="submit">Filter</button>
+    {% if risk or search %}<a class="btn btn-outline" href="{{ url_for('therapist.dashboard') }}">Clear</a>{% endif %}
+  </form>
+
+  {% if caseload %}
+  <div class="table-wrap"><table>
+    <thead><tr><th>Service member</th><th>Service no.</th><th>Latest assessment</th><th>Risk</th><th class="num">Probability</th><th class="num">Assessments</th><th class="num">Notes</th><th></th></tr></thead>
+    <tbody>
+    {% for p in caseload %}
+      <tr>
+        <td><strong>{{ p.full_name }}</strong>{% if p.military_rank %}<div class="small muted">{{ p.military_rank }}{% if p.branch %}, {{ p.branch }}{% endif %}</div>{% endif %}</td>
+        <td><span class="pill">{{ p.service_number }}</span></td>
+        <td class="nowrap">{{ p.created_at[:16] }}</td>
+        <td>{{ risk_badge(p.risk_category) }}</td>
+        <td class="num">{{ '%.0f'|format(p.probability * 100) }}%</td>
+        <td class="num">{{ p.n_assessments }}</td>
+        <td class="num">{{ p.n_notes }}</td>
+        <td><a class="btn btn-sm btn-outline" href="{{ url_for('therapist.assessment', assessment_id=p.assessment_id) }}">Review</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+    <div class="empty">{{ icon('users') }}<p>No assessments match.</p></div>
+  {% endif %}
+</div>
+<div style="margin-top:20px">{{ disclaimer('Use risk estimates alongside clinical judgement, never instead of it.') }}</div>
+{% endblock %}

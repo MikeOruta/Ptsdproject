@@ -14,3 +14,4 @@ __pycache__/
 
 # Trained model files are rebuilt with: python -m ml.train_model
 ml/*.pkl
+ml/uploads/

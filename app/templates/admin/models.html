@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Prediction models{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Prediction models</h1><p>Every trained model version. Exactly one is active at a time.</p></div>
+</div>
+{% if model_error %}<div class="alert alert-error" style="margin-bottom:20px">{{ model_error }}</div>{% endif %}
+
+<div class="split">
+  <div class="card">
+    <div class="table-wrap"><table>
+      <thead><tr><th>Version</th><th>Data</th><th class="num">Recall</th><th class="num">Precision</th><th class="num">F1</th><th>Added</th><th>Status</th></tr></thead>
+      <tbody>
+      {% for m, metrics in models %}
+        <tr>
+          <td><span class="pill">{{ m.version }}</span><div class="small muted">{{ m.algorithm }}</div></td>
+          <td class="small">{% if metrics and metrics.data_is_synthetic %}Synthetic{% elif metrics and metrics.data_file %}{{ metrics.data_file }}{% else %}-{% endif %}</td>
+          {% if metrics and metrics.test %}
+            <td class="num">{{ '%.3f'|format(metrics.test.recall) }}</td><td class="num">{{ '%.3f'|format(metrics.test.precision) }}</td><td class="num">{{ '%.3f'|format(metrics.test.f1) }}</td>
+          {% else %}<td class="num">-</td><td class="num">-</td><td class="num">-</td>{% endif %}
+          <td class="small nowrap">{{ m.created_at[:10] }}</td>
+          <td>
+            {% if m.is_active %}<span class="risk risk-Low">Active</span>
+            {% else %}
+            <form method="post" action="{{ url_for('admin.activate_model', model_id=m.model_id) }}" data-confirm="Make {{ m.version }} the active model? All new predictions will use it.">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-sm btn-outline" type="submit">Activate</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+
+  <aside>
+    <form method="post" action="{{ url_for('admin.upload_model') }}" enctype="multipart/form-data" class="card" data-once>
+      <h2>Upload a retrained model</h2>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-row"><label for="version">Version name</label><input id="version" name="version" type="text" required maxlength="30" placeholder="e.g. v2"></div>
+      <div class="form-row"><label for="model_file">Model file (.pkl)</label><input id="model_file" name="model_file" type="file" accept=".pkl" required></div>
+      <div class="alert alert-warning small" style="margin-bottom:14px">Only upload files produced by <span class="pill">ml/train_model.py</span> from a trusted source: model files can contain executable code. The file is tested, then stored <strong>inactive</strong> until you activate it.</div>
+      <button class="btn btn-primary btn-block" type="submit">Upload &amp; test</button>
+    </form>
+  </aside>
+</div>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, risk_badge, trend_chart, disclaimer %}
+{% block title %}My dashboard{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Welcome, {{ current_user.full_name.split(' ')[0] }}</h1><p>Your confidential wellbeing overview.</p></div>
+  <a class="btn btn-primary" href="{{ url_for('personnel.assessment') }}">Start a new assessment</a>
+</div>
+
+{% if latest %}
+<div class="grid grid-3" style="margin-bottom:20px">
+  <div class="card stat {{ latest.risk_category|lower }}">
+    <div class="label">Latest risk level</div>
+    <div class="value">{{ latest.risk_category }}</div>
+    <div class="hint">{{ latest.created_at[:10] }}, estimated probability {{ '%.0f'|format(latest.probability * 100) }}%</div>
+  </div>
+  <div class="card stat navy">
+    <div class="label">Assessments completed</div>
+    <div class="value">{{ history|length }}</div>
+    <div class="hint">Reassess regularly to track changes</div>
+  </div>
+  <a class="card stat navy" href="{{ url_for('personnel.result', assessment_id=latest.assessment_id) }}">
+    <div class="label">Latest result</div>
+    <div class="value" style="font-size:1.2rem;padding:8px 0">View details &rarr;</div>
+    <div class="hint">Factors, next steps and support</div>
+  </a>
+</div>
+
+<div class="card" style="margin-bottom:20px">
+  <div class="card-head"><h2>Risk over time</h2><a href="{{ url_for('personnel.history') }}">Full history</a></div>
+  {% if points|length > 1 %}
+    {{ trend_chart(points, risk_moderate, risk_high) }}
+  {% else %}
+    <p class="muted">Complete another assessment later to see how your risk changes over time.</p>
+  {% endif %}
+</div>
+{% else %}
+<div class="card empty" style="margin-bottom:20px">
+  {{ icon('clipboard') }}
+  <h2>You have not completed an assessment yet</h2>
+  <p>It takes about five minutes. Your answers are confidential and only seen by authorised mental health professionals.</p>
+  <a class="btn btn-primary" href="{{ url_for('personnel.assessment') }}">Start your first assessment</a>
+</div>
+{% endif %}
+
+<div class="grid grid-2">
+  <div class="card">
+    <h3>What happens with my answers?</h3>
+    <p class="muted" style="margin:0">A mental health professional may review your results and contact you for follow-up support. Administrators cannot see your answers. Every view is recorded.</p>
+  </div>
+  <div class="card">
+    <h3>Need help now?</h3>
+    <p class="muted" style="margin:0">If you are in danger or thinking of harming yourself, call <strong>{{ support_line }}</strong>, speak to your unit medical officer, or go to the nearest health facility.</p>
+  </div>
+</div>
+<div style="margin-top:20px">{{ disclaimer() }}</div>
+{% endblock %}

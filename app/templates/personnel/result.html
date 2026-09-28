@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, disclaimer, factors %}
+{% block title %}Assessment result{% endblock %}
+{% block content %}
+{% set pct = a.probability * 100 %}
+<div class="page-head">
+  <div>
+    <div class="breadcrumb"><a href="{{ url_for('personnel.dashboard') }}">Dashboard</a> / <a href="{{ url_for('personnel.history') }}">History</a> / Result</div>
+    <h1>Your assessment result</h1>
+    <p>Completed {{ a.created_at }} (reference #{{ a.assessment_id }})</p>
+  </div>
+  <button class="btn btn-outline no-print" type="button" data-print>Print / save as PDF</button>
+</div>
+
+<div style="margin-bottom:20px">{{ disclaimer('This result estimates risk. It is not a diagnosis of PTSD or of any condition.') }}</div>
+
+<div class="result-hero {{ a.risk_category }}" style="margin-bottom:20px">
+  <div class="result-icon">{{ icon('alert' if a.risk_category == 'High' else ('info' if a.risk_category == 'Moderate' else 'check')) }}</div>
+  <div>
+    <div class="prob">Estimated PTSD risk level</div>
+    <div class="level">{{ a.risk_category }} risk</div>
+    <div class="prob">Model-estimated probability: {{ '%.0f'|format(pct) }}%</div>
+  </div>
+</div>
+
+<div class="split">
+  <div class="grid" style="align-content:start">
+    <div class="card">
+      <h2>Where you are on the scale</h2>
+      <div class="gauge" style="background:linear-gradient(90deg,var(--low) 0 {{ risk_moderate*100 }}%,#d99a1e {{ risk_moderate*100 }}% {{ risk_high*100 }}%,var(--high) {{ risk_high*100 }}% 100%)">
+        <div class="marker" style="left: {{ pct }}%"><span>You: {{ '%.0f'|format(pct) }}%</span></div>
+      </div>
+      <div class="gauge-labels"><span style="width:{{ risk_moderate*100 }}%">Low</span><span style="width:{{ (risk_high-risk_moderate)*100 }}%">Moderate</span><span>High</span></div>
+    </div>
+
+    <div class="card">
+      <h2>What influenced this result</h2>
+      {{ factors(raising, lowering) }}
+    </div>
+  </div>
+
+  <aside class="grid" style="align-content:start">
+    <div class="card">
+      <h2>Recommended next steps</h2>
+      {% if a.risk_category == 'High' %}
+        <ul style="padding-left:18px">
+          <li><strong>Please speak to a mental health professional soon.</strong> A clinician can see this result and may contact you.</li>
+          <li>Contact your unit medical officer or nearest health facility for an appointment.</li>
+          <li>If you are in danger or thinking of harming yourself, call <strong>{{ support_line }}</strong> now.</li>
+        </ul>
+      {% elif a.risk_category == 'Moderate' %}
+        <ul style="padding-left:18px">
+          <li>Consider speaking to a mental health professional or your unit medical officer.</li>
+          <li>Look after sleep, limit alcohol, and stay connected with people you trust.</li>
+          <li>Reassess in 2 to 4 weeks to see whether things are changing.</li>
+        </ul>
+      {% else %}
+        <ul style="padding-left:18px">
+          <li>No elevated risk was estimated at this time.</li>
+          <li>Keep looking after your sleep, social connections and alcohol use.</li>
+          <li>Reassess if anything changes, or after your next deployment.</li>
+        </ul>
+      {% endif %}
+      <a class="btn btn-primary btn-block no-print" href="{{ url_for('personnel.dashboard') }}">Back to dashboard</a>
+    </div>
+    <div class="card">
+      <h3>Your answers</h3>
+      <dl class="kv small">
+        <dt>Age</dt><dd>{{ a.age }}</dd>
+        <dt>Gender</dt><dd>{{ a.gender|capitalize }}</dd>
+        <dt>Deployment</dt><dd>{{ a.deployment_duration_months }} months</dd>
+        <dt>Combat exposure</dt><dd>{{ a.combat_exposure }}/10</dd>
+        <dt>Prior trauma</dt><dd>{{ 'Yes' if a.prior_trauma else 'No' }}</dd>
+        <dt>Social isolation</dt><dd>{{ a.social_isolation }}/10</dd>
+        <dt>Sleep disturbance</dt><dd>{{ a.sleep_score }}/10</dd>
+        <dt>Anxiety (GAD-7)</dt><dd>{{ a.anxiety_score }}/21</dd>
+        <dt>Depression (PHQ-9)</dt><dd>{{ a.depression_score }}/27</dd>
+        <dt>Alcohol (AUDIT)</dt><dd>{{ a.alcohol_use }}/40</dd>
+      </dl>
+    </div>
+  </aside>
+</div>
+{% endblock %}

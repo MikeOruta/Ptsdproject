@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Privacy{% endblock %}
+{% block content %}
+<div class="card" style="max-width:820px">
+  <h1>Privacy &amp; data protection</h1>
+  <p class="muted">How this system handles your information.</p>
+  <h2>What we collect</h2>
+  <p>Your name, email, service number and optional rank and branch; your answers to each assessment; the risk estimate produced; notes written by mental health professionals; and a log of actions such as sign-ins and who viewed an assessment.</p>
+  <h2>Who can see it</h2>
+  <ul>
+    <li><strong>You</strong> can see your own assessments and results.</li>
+    <li><strong>Authorised mental health professionals</strong> can see assessments in order to provide support. Every view is recorded.</li>
+    <li><strong>Administrators</strong> manage accounts and the system, but cannot open assessment answers.</li>
+  </ul>
+  <h2>How it is protected</h2>
+  <ul>
+    <li>Passwords are stored only as salted hashes, never in readable form.</li>
+    <li>Access is controlled by role and checked on the server for every page.</li>
+    <li>Sessions time out after 30 minutes of inactivity; repeated failed sign-ins lock the account temporarily.</li>
+    <li>Connections are encrypted (HTTPS) in production.</li>
+  </ul>
+  <h2>Consent</h2>
+  <p>You are asked for informed consent before each assessment. Taking part is voluntary.</p>
+  <h2>Important</h2>
+  <p>This system provides <strong>decision-support only, not a medical diagnosis</strong>. If you are in danger, call <strong>{{ support_line }}</strong>.</p>
+  <p class="small muted">Data protection in Kenya is governed by the Data Protection Act, 2019. Operational deployment requires approval by the organisation's data protection officer.</p>
+</div>
+{% endblock %}

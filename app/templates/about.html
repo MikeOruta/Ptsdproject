@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, disclaimer %}
+{% block title %}About the model{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>About the prediction model</h1><p>How risk is estimated, and how well the model performs.</p></div>
+</div>
+
+{% if metrics and metrics.data_is_synthetic %}
+<div class="alert alert-warning" style="margin-bottom:20px">
+  <strong>Development model, trained on synthetic data.</strong> Real military health records are confidential, so this version was trained on computer-generated data with documented, literature-informed relationships. The figures below show that the method works; they are <strong>not</strong> evidence of accuracy on real personnel. The model must be retrained and validated on approved real data before operational use.
+</div>
+{% endif %}
+
+<div class="split">
+  <div class="grid">
+    <div class="card">
+      <h2>Method</h2>
+      <p><strong>Logistic Regression</strong> estimates the probability of probable PTSD from ten inputs. It was chosen for being <em>interpretable</em> (every input has a visible weight), <em>computationally light</em> (suitable for low-resource settings) and well established in healthcare prediction.</p>
+      <ol>
+        <li><strong>Cleaning:</strong> duplicates removed, spellings standardised, impossible values discarded.</li>
+        <li><strong>Missing values:</strong> filled with the median (numbers) or most common value (categories).</li>
+        <li><strong>Normalisation:</strong> numbers rescaled to a common scale.</li>
+        <li><strong>Encoding:</strong> gender converted to numeric indicator columns.</li>
+        <li><strong>Feature selection:</strong> only statistically significant inputs kept (p &lt; 0.05).</li>
+        <li><strong>Training:</strong> 80/20 stratified split, 5-fold cross-validation, class weighting for the minority (PTSD) class.</li>
+      </ol>
+      <p>The probability is mapped to a category: <span class="risk risk-Low">Low</span> below {{ '%.0f'|format(risk_moderate * 100) }}%, <span class="risk risk-Moderate">Moderate</span> from {{ '%.0f'|format(risk_moderate * 100) }}%, <span class="risk risk-High">High</span> from {{ '%.0f'|format(risk_high * 100) }}%.</p>
+    </div>
+
+    {% if metrics %}
+    <div class="card">
+      <div class="card-head"><h2>Risk factors the model learned</h2><span class="pill">model {{ version }}</span></div>
+      <p class="small muted">Odds ratio: how much the odds of PTSD multiply for each one-point increase. Above 1 raises risk; below 1 lowers it.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Input</th><th class="num">Odds ratio</th><th>Effect</th></tr></thead>
+        <tbody>
+        {% for r in metrics.odds_ratios %}
+          <tr><td>{{ r.feature.replace('_', ' ').capitalize() }}</td><td class="num">{{ '%.3f'|format(r.odds_ratio) }}</td>
+            <td>{% if r.odds_ratio > 1 %}<span class="risk risk-High">raises risk</span>{% else %}<span class="risk risk-Low">lowers risk</span>{% endif %}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+      {% if metrics.features_dropped_by_selection %}<p class="small muted" style="margin-top:10px">Dropped by feature selection: {{ metrics.features_dropped_by_selection|join(', ') }}.</p>{% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="grid" style="align-content:start">
+    {% if metrics and metrics.test %}
+    <div class="card">
+      <h2>Performance on unseen test data</h2>
+      <dl class="kv">
+        <dt>Recall</dt><dd>{{ '%.0f'|format(metrics.test.recall * 100) }}% <span class="small muted">of PTSD cases caught</span></dd>
+        <dt>Precision</dt><dd>{{ '%.0f'|format(metrics.test.precision * 100) }}% <span class="small muted">of flags correct</span></dd>
+        <dt>F1-score</dt><dd>{{ '%.2f'|format(metrics.test.f1) }}</dd>
+        <dt>Accuracy</dt><dd>{{ '%.0f'|format(metrics.test.accuracy * 100) }}%</dd>
+        <dt>ROC-AUC</dt><dd>{{ '%.2f'|format(metrics.test.roc_auc) }}</dd>
+      </dl>
+      <h3 style="margin-top:20px">Confusion matrix</h3>
+      {% set cm = metrics.test.confusion_matrix %}
+      <div class="cm">
+        <div class="h"></div><div class="h">Predicted<br>no PTSD</div><div class="h">Predicted<br>PTSD</div>
+        <div class="h" style="text-align:right">Actual<br>no PTSD</div><div class="ok">{{ cm.true_negative }}</div><div class="bad">{{ cm.false_positive }}</div>
+        <div class="h" style="text-align:right">Actual<br>PTSD</div><div class="bad">{{ cm.false_negative }}</div><div class="ok">{{ cm.true_positive }}</div>
+      </div>
+      <p class="small muted" style="margin-top:12px">The model is tuned to catch cases (high recall) at the cost of some false alarms. For screening, missing a case is worse than an extra review.</p>
+    </div>
+    {% else %}
+    <div class="card"><p class="muted">Model metrics are not available.</p></div>
+    {% endif %}
+    {{ disclaimer('The model supports, and never replaces, the judgement of a qualified professional.') }}
+  </div>
+</div>
+{% endblock %}

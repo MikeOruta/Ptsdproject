@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Register{% endblock %}
+{% block content %}
+<div style="max-width:640px;margin:0 auto">
+  <div class="page-head"><div>
+    <h1>Register as a service member</h1>
+    <p>Create an account to complete confidential PTSD risk assessments.</p>
+  </div></div>
+
+  <form method="post" class="card" data-once>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-row">
+      <label for="full_name">Full name</label>
+      <input id="full_name" name="full_name" type="text" autocomplete="name" required maxlength="150" value="{{ form.full_name or '' }}">
+    </div>
+    <div class="form-row">
+      <label for="email">Email address</label>
+      <input id="email" name="email" type="email" autocomplete="email" required maxlength="255" value="{{ form.email or '' }}">
+    </div>
+    <div class="grid grid-3" style="gap:16px">
+      <div class="form-row">
+        <label for="service_number">Service number</label>
+        <input id="service_number" name="service_number" type="text" required maxlength="50" value="{{ form.service_number or '' }}">
+      </div>
+      <div class="form-row">
+        <label for="military_rank">Rank <span class="muted small">(optional)</span></label>
+        <input id="military_rank" name="military_rank" type="text" maxlength="100" value="{{ form.military_rank or '' }}">
+      </div>
+      <div class="form-row">
+        <label for="branch">Branch <span class="muted small">(optional)</span></label>
+        <select id="branch" name="branch">
+          {% for b in ['', 'Army', 'Navy', 'Air Force', 'Other'] %}
+            <option value="{{ b }}" {% if form.branch == b %}selected{% endif %}>{{ b or 'Select…' }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <label for="password">Password</label>
+      <span class="hint">At least 10 characters, including letters and numbers.</span>
+      <input id="password" name="password" type="password" autocomplete="new-password" required minlength="10">
+    </div>
+    <div class="form-row">
+      <label for="confirm_password">Confirm password</label>
+      <input id="confirm_password" name="confirm_password" type="password" autocomplete="new-password" required minlength="10">
+    </div>
+    <p class="small muted">By registering you agree to the <a href="{{ url_for('main.privacy') }}">privacy notice</a>. Mental health professionals and administrators do not register here; their accounts are created by an administrator.</p>
+    <button class="btn btn-primary" type="submit">Create account</button>
+    <a class="btn btn-outline" href="{{ url_for('auth.login') }}" style="margin-left:6px">I already have an account</a>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "_macros.html" import disclaimer %}
+{% block title %}Summary report{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="breadcrumb"><a href="{{ url_for('therapist.dashboard') }}">Caseload</a> / Summary report</div>
+    <h1>Summary report</h1>
+    <p>Aggregate figures only: no names or identifiers. Suitable for sharing with management.</p>
+  </div>
+  <button class="btn btn-outline no-print" type="button" data-print>Print / save as PDF</button>
+</div>
+
+<div class="grid grid-3" style="margin-bottom:20px">
+  <div class="card stat navy"><div class="label">Assessments</div><div class="value">{{ totals.assessments }}</div></div>
+  <div class="card stat navy"><div class="label">Service members assessed</div><div class="value">{{ totals.people }}</div></div>
+  <div class="card stat navy"><div class="label">Average estimated risk</div><div class="value">{{ '%.0f'|format((totals.avg_probability or 0) * 100) }}%</div></div>
+</div>
+
+<div class="card">
+  <h2>By month</h2>
+  {% if by_month %}
+  <div class="table-wrap"><table>
+    <thead><tr><th>Month</th><th class="num">Assessments</th><th class="num">High</th><th class="num">Moderate</th><th class="num">Low</th><th style="width:35%">Distribution</th></tr></thead>
+    <tbody>
+    {% for m in by_month %}
+      <tr>
+        <td>{{ m.month }}</td><td class="num">{{ m.total }}</td>
+        <td class="num">{{ m.high }}</td><td class="num">{{ m.moderate }}</td><td class="num">{{ m.low }}</td>
+        <td><div style="display:flex;height:12px;border-radius:999px;overflow:hidden;background:#e7ebf0">
+          <span style="width:{{ m.high / m.total * 100 }}%;background:var(--high)"></span>
+          <span style="width:{{ m.moderate / m.total * 100 }}%;background:#d99a1e"></span>
+          <span style="width:{{ m.low / m.total * 100 }}%;background:var(--low)"></span>
+        </div></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}<p class="muted">No assessments yet.</p>{% endif %}
+</div>
+<div style="margin-top:20px">{{ disclaimer() }}</div>
+{% endblock %}

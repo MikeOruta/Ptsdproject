@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Home{% endblock %}
+{% block full %}
+<section class="hero">
+  <img class="hero-art" src="{{ url_for('static', filename='img/hero.svg') }}" alt="">
+  <div class="container">
+    <div class="hero-copy">
+      <div class="eyebrow">Post-deployment mental health</div>
+      <h1>Early, confidential PTSD risk screening for service members</h1>
+      <p>Answer a short, structured assessment after deployment. A transparent Logistic Regression model estimates your risk of post-traumatic stress, so that support can reach you <em>before</em> symptoms become severe.</p>
+      <div class="hero-actions">
+        <a class="btn btn-gold" href="{{ url_for('auth.register') }}">Register as a service member</a>
+        <a class="btn btn-ghost" href="{{ url_for('auth.login') }}">Sign in</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container" style="margin-top:-36px;position:relative;z-index:2">
+  {% include "_flashes.html" %}
+  <div class="grid grid-3">
+    <div class="card stat navy"><div class="label">Takes about</div><div class="value">5 min</div><div class="hint">10 questions, no special software</div></div>
+    <div class="card stat navy"><div class="label">Result</div><div class="value" style="font-size:1.35rem;padding:6px 0">Low · Moderate · High</div><div class="hint">with the answers that drove it</div></div>
+    <div class="card stat navy"><div class="label">Reviewed by</div><div class="value" style="font-size:1.35rem;padding:6px 0">Mental health professionals</div><div class="hint">authorised clinicians only</div></div>
+  </div>
+</div>
+
+<section class="band">
+  <div class="container">
+    <div class="section-title">
+      <h2>Why early screening matters</h2>
+      <p>Stigma, limited awareness and long waiting times mean many cases of PTSD are identified only once symptoms are severe. Earlier identification improves recovery.</p>
+    </div>
+    <div class="grid grid-2">
+      <div class="feature"><div class="feature-icon">{{ icon('activity') }}</div><div><h3>Evidence-based risk factors</h3><p>Combat exposure, deployment length, prior trauma, sleep, anxiety (GAD-7), depression (PHQ-9), alcohol use (AUDIT) and social isolation.</p></div></div>
+      <div class="feature"><div class="feature-icon">{{ icon('eye') }}</div><div><h3>Transparent, not a black box</h3><p>Logistic Regression shows exactly which answers raised or lowered each estimate, so clinicians can check and trust it.</p></div></div>
+      <div class="feature"><div class="feature-icon">{{ icon('server') }}</div><div><h3>Built for low-resource settings</h3><p>Runs on modest hardware and slow connections: no heavy frameworks, no external services.</p></div></div>
+      <div class="feature"><div class="feature-icon">{{ icon('lock') }}</div><div><h3>Confidential by design</h3><p>Role-based access, hashed passwords, consent before every assessment, and a full audit trail of who viewed what.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="band band-white">
+  <div class="container">
+    <div class="section-title"><h2>How it works</h2></div>
+    <ol class="steps">
+      <li><h3>Register &amp; sign in</h3><p class="muted">Create your account with your service number.</p></li>
+      <li><h3>Complete the assessment</h3><p class="muted">Ten questions about your deployment and wellbeing, after giving consent.</p></li>
+      <li><h3>See your risk level</h3><p class="muted">Low, Moderate or High, with the factors behind it and next steps.</p></li>
+      <li><h3>Get support</h3><p class="muted">A mental health professional reviews results and follows up. Reassess over time to track progress.</p></li>
+    </ol>
+  </div>
+</section>
+
+<section class="band">
+  <div class="container">
+    <div class="grid grid-2" style="align-items:center">
+      <div class="photo-card" style="aspect-ratio:16/10"><img src="{{ url_for('static', filename='img/hero.svg') }}" alt="Soldiers on patrol at dusk" style="object-position:85% 100%"></div>
+      <div>
+        <h2>For clinicians and administrators</h2>
+        <p class="muted">Mental health professionals see a prioritised caseload, highest risk first, with each person's history and a place for clinical notes. Administrators manage accounts, assessment wording, model versions and the audit log.</p>
+        <a class="btn btn-primary" href="{{ url_for('auth.login', role='therapist') }}">Staff sign in</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

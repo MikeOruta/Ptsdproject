@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Assessment questions{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Assessment questions</h1><p>Edit the wording, help text and order shown to service members.</p></div>
+</div>
+<div class="alert alert-info" style="margin-bottom:20px">Answer ranges are fixed because the model was trained on them. Changing a range would make predictions invalid, so it requires retraining the model.</div>
+
+<div class="grid">
+{% for q in questions %}
+  <div class="card">
+    <div class="card-head">
+      <div><span class="pill">{{ q.field_name }}</span> <span class="small muted">order {{ q.display_order }}{% if q.min_value is not none %} · range {{ q.min_value }}–{{ q.max_value }}{% endif %}</span></div>
+    </div>
+    <p style="margin-bottom:4px"><strong>{{ q.question_text }}</strong></p>
+    {% if q.help_text %}<p class="small muted">{{ q.help_text }}</p>{% endif %}
+    <details class="edit">
+      <summary>Edit</summary>
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="question_id" value="{{ q.question_id }}">
+        <div class="form-row"><label for="t{{ q.question_id }}">Question</label><input id="t{{ q.question_id }}" name="question_text" type="text" required maxlength="500" value="{{ q.question_text }}"></div>
+        <div class="form-row"><label for="h{{ q.question_id }}">Help text</label><input id="h{{ q.question_id }}" name="help_text" type="text" maxlength="500" value="{{ q.help_text or '' }}"></div>
+        <div class="form-row"><label for="o{{ q.question_id }}">Display order</label><input id="o{{ q.question_id }}" name="display_order" type="number" required value="{{ q.display_order }}"></div>
+        <button class="btn btn-primary btn-sm" type="submit">Save</button>
+      </form>
+    </details>
+  </div>
+{% endfor %}
+</div>
+{% endblock %}

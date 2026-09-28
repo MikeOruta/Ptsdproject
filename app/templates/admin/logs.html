@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Audit log{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Audit log</h1><p>Sign-ins, assessments, record views and administrative changes.</p></div>
+</div>
+<div class="card">
+  <form method="get" class="inline-form" style="margin-bottom:14px">
+    <div class="form-row">
+      <label for="action">Action</label>
+      <select id="action" name="action">
+        <option value="">All actions</option>
+        {% for a in actions %}<option {% if action == a %}selected{% endif %}>{{ a }}</option>{% endfor %}
+      </select>
+    </div>
+    <button class="btn btn-outline" type="submit">Filter</button>
+  </form>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Time (UTC)</th><th>User</th><th>Action</th><th>Details</th><th>IP address</th></tr></thead>
+    <tbody>
+    {% for l in logs %}
+      <tr>
+        <td class="nowrap small">{{ l.created_at }}</td>
+        <td class="small">{{ l.email or '(anonymous)' }}{% if l.role %}<div class="muted">{{ role_labels[l.role] }}</div>{% endif %}</td>
+        <td><span class="pill">{{ l.action }}</span></td>
+        <td class="small">{{ l.details or '' }}</td>
+        <td class="small">{{ l.ip_address or '' }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5" class="muted">No entries.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  <div class="pager">
+    {% if page > 1 %}<a class="btn btn-sm btn-outline" href="{{ url_for('admin.logs', action=action or None, page=page-1) }}">&larr; Newer</a>{% endif %}
+    {% if has_next %}<a class="btn btn-sm btn-outline" href="{{ url_for('admin.logs', action=action or None, page=page+1) }}">Older &rarr;</a>{% endif %}
+  </div>
+</div>
+{% endblock %}

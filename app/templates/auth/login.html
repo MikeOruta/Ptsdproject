@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block full %}
+<div class="auth-wrap">
+  <div class="auth-side">
+    <img src="{{ url_for('static', filename='img/hero.svg') }}" alt="" style="object-position:80% 100%">
+    <div class="copy">
+      <h2>Looking after those who serve.</h2>
+      <p>Confidential screening that helps identify post-traumatic stress early, so support arrives sooner.</p>
+    </div>
+  </div>
+  <div class="auth-main">
+    <div class="auth-card">
+      {% include "_flashes.html" %}
+      <h1>Sign in</h1>
+      <p class="muted">Choose your role, then enter your details.</p>
+
+      {# Tabs are plain links, so they work without JavaScript. The server
+         still checks the chosen role against the account's real role. #}
+      <nav class="tabs" aria-label="Sign-in role">
+        {% for r, label in [('military_personnel', 'Service Member'), ('therapist', 'Mental Health Professional'), ('administrator', 'Administrator')] %}
+          <a href="{{ url_for('auth.login', role=r, next=request.args.get('next')) }}" {% if role == r %}aria-current="page"{% endif %}>{{ label }}</a>
+        {% endfor %}
+      </nav>
+
+      <form method="post" action="{{ url_for('auth.login', role=role, next=request.args.get('next')) }}" class="card">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="role" value="{{ role }}">
+        <div class="form-row">
+          <label for="email">Email address</label>
+          <input id="email" name="email" type="email" autocomplete="username" required value="{{ email }}" autofocus>
+        </div>
+        <div class="form-row">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <button class="btn btn-primary btn-block" type="submit">Sign in as {{ role_labels[role] }}</button>
+      </form>
+
+      {% if role == 'military_personnel' %}
+        <p style="margin-top:18px">New here? <a href="{{ url_for('auth.register') }}">Register as a service member</a></p>
+      {% else %}
+        <p class="small muted" style="margin-top:18px">Staff accounts are created by a system administrator.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

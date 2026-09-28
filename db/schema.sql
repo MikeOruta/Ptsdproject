@@ -99,6 +99,7 @@ CREATE TABLE assessments (
   alcohol_use                INTEGER NOT NULL CHECK (alcohol_use BETWEEN 0 AND 40),   -- AUDIT range
   pcl5_score                 INTEGER CHECK (pcl5_score BETWEEN 0 AND 80),             -- optional, not a feature
   other_factors              TEXT,
+  consent_given              INTEGER NOT NULL CHECK (consent_given = 1), -- informed consent (Proposal 3.13)
   created_at                 TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -126,8 +127,26 @@ CREATE TABLE assessment_questions (
   question_id    INTEGER PRIMARY KEY AUTOINCREMENT,
   field_name     TEXT NOT NULL UNIQUE,           -- matches an assessments column
   question_text  TEXT NOT NULL,
+  help_text      TEXT,
   min_value      INTEGER,
   max_value      INTEGER,
   display_order  INTEGER NOT NULL DEFAULT 0,
   is_active      INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0,1))
 );
+
+-- Default wording for the assessment form (administrators can edit it).
+-- Ranges must match ml/features.py; they are not editable to protect the model.
+INSERT INTO assessment_questions (field_name, question_text, help_text, min_value, max_value, display_order) VALUES
+ ('age', 'What is your age?', 'In years.', 18, 70, 1),
+ ('gender', 'What is your gender?', NULL, NULL, NULL, 2),
+ ('deployment_duration_months', 'How long was your most recent deployment?', 'In months.', 0, 120, 3),
+ ('combat_exposure', 'How often were you exposed to combat or life-threatening situations during deployment?', '0 = never, 10 = constantly.', 0, 10, 4),
+ ('prior_trauma', 'Before this deployment, had you experienced a traumatic event?', 'For example an assault, accident, disaster or earlier combat.', 0, 1, 5),
+ ('social_isolation', 'How cut off do you feel from family, friends and colleagues?', '0 = well supported, 10 = completely isolated.', 0, 10, 6),
+ ('sleep_score', 'How much trouble have you had sleeping in the past month?', 'Including nightmares and waking at night. 0 = none, 10 = severe.', 0, 10, 7),
+ ('anxiety_score', 'Anxiety score (GAD-7)', 'Total from the 7-question GAD-7 anxiety questionnaire, 0 to 21.', 0, 21, 8),
+ ('depression_score', 'Depression score (PHQ-9)', 'Total from the 9-question PHQ-9 depression questionnaire, 0 to 27.', 0, 27, 9),
+ ('alcohol_use', 'Alcohol use score (AUDIT)', 'Total from the 10-question AUDIT alcohol questionnaire, 0 to 40.', 0, 40, 10);
+
+CREATE INDEX idx_assessments_user ON assessments(user_id, created_at);
+CREATE INDEX idx_logs_created ON system_logs(created_at);

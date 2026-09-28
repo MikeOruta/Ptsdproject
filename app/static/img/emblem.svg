@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Portal emblem">
+  <!-- Generic shield emblem (not the insignia of any real organisation). -->
+  <path d="M32 3 L56 11 V30 C56 45 45.5 55.5 32 61 C18.5 55.5 8 45 8 30 V11 Z" fill="#c9a227"/>
+  <path d="M32 7.5 L52 14.2 V30 C52 42.6 43.3 51.6 32 56.5 C20.7 51.6 12 42.6 12 30 V14.2 Z" fill="#0b2545"/>
+  <path d="M32 16 L35.3 25.6 L45.5 25.8 L37.4 31.9 L40.3 41.6 L32 35.8 L23.7 41.6 L26.6 31.9 L18.5 25.8 L28.7 25.6 Z" fill="#c9a227"/>
+  <path d="M20 47 C25 50 39 50 44 47" stroke="#c9a227" stroke-width="2" fill="none" stroke-linecap="round"/>
+</svg>

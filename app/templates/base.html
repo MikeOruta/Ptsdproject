@@ -1,0 +1,103 @@
+{% from "_macros.html" import icon %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}PTSD Risk Assessment Portal{% endblock %} · {{ org_name }}</title>
+  <meta name="description" content="Confidential PTSD risk screening for post-deployment service members. Decision-support only.">
+  <link rel="icon" href="{{ url_for('static', filename='img/emblem.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<div class="official-banner">
+  <div class="container">
+    <span><strong>OFFICIAL · SENSITIVE</strong>&nbsp; Authorised users only. Activity on this system is logged.</span>
+    <span>Decision-support only, not a medical diagnosis.</span>
+  </div>
+</div>
+
+{% set ep = request.endpoint or '' %}
+<header class="site-header">
+  <div class="container">
+    <a class="brand" href="{{ url_for('main.index') }}">
+      <img src="{{ url_for('static', filename='img/emblem.svg') }}" alt="">
+      <span class="brand-text">
+        <span class="brand-org">{{ org_name }}</span>
+        <span class="brand-name">PTSD Risk Assessment Portal</span>
+      </span>
+    </a>
+
+    <nav class="nav" aria-label="Main">
+      {% if current_user %}
+        {% set role = current_user.role %}
+        {% if role == 'military_personnel' %}
+          <a href="{{ url_for('personnel.dashboard') }}" class="{{ 'active' if ep == 'personnel.dashboard' }}">Dashboard</a>
+          <a href="{{ url_for('personnel.assessment') }}" class="{{ 'active' if ep == 'personnel.assessment' }}">New assessment</a>
+          <a href="{{ url_for('personnel.history') }}" class="{{ 'active' if ep in ('personnel.history', 'personnel.result') }}">My history</a>
+        {% elif role == 'therapist' %}
+          <a href="{{ url_for('therapist.dashboard') }}" class="{{ 'active' if ep in ('therapist.dashboard', 'therapist.assessment') }}">Caseload</a>
+          <a href="{{ url_for('therapist.report') }}" class="{{ 'active' if ep == 'therapist.report' }}">Reports</a>
+        {% elif role == 'administrator' %}
+          <a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if ep == 'admin.dashboard' }}">Overview</a>
+          <a href="{{ url_for('admin.users') }}" class="{{ 'active' if ep == 'admin.users' }}">Users</a>
+          <a href="{{ url_for('admin.questions') }}" class="{{ 'active' if ep == 'admin.questions' }}">Questions</a>
+          <a href="{{ url_for('admin.models') }}" class="{{ 'active' if ep == 'admin.models' }}">Models</a>
+          <a href="{{ url_for('admin.logs') }}" class="{{ 'active' if ep == 'admin.logs' }}">Audit log</a>
+        {% endif %}
+        <a href="{{ url_for('main.about') }}" class="{{ 'active' if ep == 'main.about' }}">About the model</a>
+        <span class="user-chip">
+          <span class="role-badge {{ role }}" title="Signed in as {{ current_user.full_name }}">{{ role_labels[role] }}</span>
+          <form method="post" action="{{ url_for('auth.logout') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="linklike" type="submit" style="color:#e3e9f2">Sign out</button>
+          </form>
+        </span>
+      {% else %}
+        <a href="{{ url_for('main.index') }}" class="{{ 'active' if ep == 'main.index' }}">Home</a>
+        <a href="{{ url_for('main.about') }}" class="{{ 'active' if ep == 'main.about' }}">About the model</a>
+        <a href="{{ url_for('auth.register') }}" class="{{ 'active' if ep == 'auth.register' }}">Register</a>
+        <a href="{{ url_for('auth.login') }}" class="btn btn-gold btn-sm" style="margin-left:6px">Sign in</a>
+      {% endif %}
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  {% block full %}
+  <div class="page">
+    <div class="container">
+      {% include "_flashes.html" %}
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+  {% endblock %}
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div>
+      <strong>{{ org_name }}</strong>
+      PTSD Risk Assessment Portal: confidential early-warning screening for post-deployment service members.
+    </div>
+    <div>
+      <strong>Need help now?</strong>
+      If you are in danger or thinking of harming yourself, call <b style="color:#fff">{{ support_line }}</b> or go to the nearest health facility.
+    </div>
+    <div>
+      <strong>Information</strong>
+      <a href="{{ url_for('main.about') }}">How the model works</a><br>
+      <a href="{{ url_for('main.privacy') }}">Privacy &amp; data protection</a>
+    </div>
+  </div>
+  <div class="footer-legal">
+    <div class="container" style="display:block;padding-top:0;padding-bottom:0">
+      Results are decision-support only and are not a medical diagnosis. Always consult a qualified mental health professional.
+    </div>
+  </div>
+</footer>
+</body>
+</html>

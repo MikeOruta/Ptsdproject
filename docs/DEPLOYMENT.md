@@ -34,11 +34,30 @@ packages (pandas, scikit-learn), which saves the free account's limited disk spa
 ```bash
 cp .env.example .env
 sed -i "s/^SECRET_KEY=.*/SECRET_KEY=$(python -c 'import secrets; print(secrets.token_hex(32))')/" .env
+sed -i "s/^SECURE_COOKIES=.*/SECURE_COOKIES=1/" .env
 python db/init_db.py
+python -m ml.generate_synthetic_data
+python -m ml.train_model
 ```
 
 This creates a server-only `.env` with its own random secret key (never copied
-from the laptop), then creates the 10 database tables.
+from the laptop), turns on HTTPS-only cookies, creates the 10 database tables,
+and trains the model **on the server**. Training on the server guarantees that
+the model matches the server's scikit-learn version; it takes a few seconds.
+
+Then create your administrator account (you type the password privately):
+
+```bash
+python -m db.create_user --role administrator --email you@example.org --name "Your Name"
+```
+
+Optional, for demonstrations: load fictional demo accounts. First set a demo
+password (10+ characters, letters and numbers) in `.env`, then run the seed script:
+
+```bash
+nano .env        # set DEMO_PASSWORD=..., then Ctrl+O, Enter, Ctrl+X
+python -m db.seed_demo
+```
 
 ### 3. Create the web app (Web tab)
 1. **Web** → **Add a new web app** → **Next**.
@@ -72,8 +91,9 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Then **Web** tab → **Reload**. (Only re-run `python db/init_db.py` if the schema
-changed; it wipes all data.)
+Then **Web** tab → **Reload**. Re-run `python -m ml.train_model` if the ML code
+changed. Only re-run `python db/init_db.py` if the schema changed: it wipes all
+data, after which you must run `train_model`, `create_user` (and `seed_demo`) again.
 
 ## Troubleshooting
 - **Error page / "Something went wrong"**: Web tab → **Error log** (bottom of the

@@ -1,6 +1,6 @@
-flask
-scikit-learn
-pandas
-joblib
-python-dotenv
-pytest
+flask>=2.3
+scikit-learn>=1.2
+pandas>=1.5
+joblib>=1.2
+python-dotenv>=1.0
+pytest>=7.0

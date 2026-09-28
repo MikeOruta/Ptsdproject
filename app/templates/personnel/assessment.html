@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field_error, disclaimer %}
+{% block title %}New assessment{% endblock %}
+{% block content %}
+{# How each question is answered. Wording and order come from the database
+   (editable by administrators); valid ranges come from ml/features.py. #}
+{% set widgets = {
+  'age': 'number', 'gender': 'gender', 'deployment_duration_months': 'number',
+  'combat_exposure': 'range', 'prior_trauma': 'yesno', 'social_isolation': 'range',
+  'sleep_score': 'range', 'anxiety_score': 'number', 'depression_score': 'number',
+  'alcohol_use': 'number'} %}
+{# A new section starts at these questions (or at the first question). #}
+{% set sections = {'age': 'About you', 'deployment_duration_months': 'Your deployment',
+                   'social_isolation': 'Wellbeing in the past month', 'anxiety_score': 'Clinical questionnaire scores'} %}
+
+<div class="page-head">
+  <div>
+    <div class="breadcrumb"><a href="{{ url_for('personnel.dashboard') }}">Dashboard</a> / New assessment</div>
+    <h1>PTSD risk assessment</h1>
+    <p>Answer honestly; there are no right or wrong answers. It takes about five minutes.</p>
+  </div>
+</div>
+
+<div class="split">
+  <form method="post" class="card" novalidate data-once>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% set ns = namespace(section=0) %}
+    {% for q in questions %}
+      {% set f = q.field_name %}
+      {% if f in sections or loop.first %}
+        {% if not loop.first %}</fieldset>{% endif %}
+        {% set ns.section = ns.section + 1 %}
+        <fieldset class="form-section">
+        <h2><span class="step-num">{{ ns.section }}</span> {{ sections.get(f, 'Assessment') }}</h2>
+      {% endif %}
+
+      <div class="form-row {{ 'field-error' if errors.get(f) }}">
+        {% if widgets[f] in ('gender', 'yesno') %}<span class="label" id="{{ f }}-label">{{ q.question_text }}</span>
+        {% else %}<label for="{{ f }}">{{ q.question_text }}</label>{% endif %}
+        {% if q.help_text %}<span class="hint">{{ q.help_text }}</span>{% endif %}
+
+        {% if widgets[f] == 'number' %}
+          <input id="{{ f }}" name="{{ f }}" type="number" inputmode="numeric" required
+                 min="{{ ranges[f][0] }}" max="{{ ranges[f][1] }}" value="{{ values.get(f, '') }}"
+                 {% if errors.get(f) %}aria-invalid="true" aria-describedby="{{ f }}-error"{% endif %}>
+        {% elif widgets[f] == 'range' %}
+          <div class="range-wrap">
+            <input id="{{ f }}" name="{{ f }}" type="range" min="{{ ranges[f][0] }}" max="{{ ranges[f][1] }}" step="1"
+                   value="{{ values.get(f, 0) }}" data-output="{{ f }}-out">
+            <output class="range-value" id="{{ f }}-out" for="{{ f }}">{{ values.get(f, 0) }}</output>
+          </div>
+          <div class="range-scale"><span>{{ ranges[f][0] }}</span><span>{{ ranges[f][1] }}</span></div>
+        {% elif widgets[f] == 'gender' %}
+          <div class="choice-group" role="radiogroup" aria-labelledby="{{ f }}-label">
+            {% for v, label in [('male', 'Male'), ('female', 'Female'), ('other', 'Other / prefer to self-describe')] %}
+              <label class="choice"><input type="radio" name="{{ f }}" value="{{ v }}" required {% if values.get(f) == v %}checked{% endif %}><span>{{ label }}</span></label>
+            {% endfor %}
+          </div>
+        {% elif widgets[f] == 'yesno' %}
+          <div class="choice-group" role="radiogroup" aria-labelledby="{{ f }}-label">
+            <label class="choice"><input type="radio" name="{{ f }}" value="1" required {% if values.get(f) == 1 %}checked{% endif %}><span>Yes</span></label>
+            <label class="choice"><input type="radio" name="{{ f }}" value="0" {% if values.get(f) == 0 %}checked{% endif %}><span>No</span></label>
+          </div>
+        {% endif %}
+        {{ field_error(errors, f) }}
+      </div>
+      {% if loop.last %}
+        <div class="form-row {{ 'field-error' if errors.get('pcl5_score') }}">
+          <label for="pcl5_score">PCL-5 score <span class="muted small">(optional)</span></label>
+          <span class="hint">If a clinician has given you the PCL-5 checklist, enter your total (0 to 80). Kept for clinical reference; not used by the model.</span>
+          <input id="pcl5_score" name="pcl5_score" type="number" min="0" max="80" value="{{ values.get('pcl5_score') or '' }}">
+          {{ field_error(errors, 'pcl5_score') }}
+        </div>
+        </fieldset>
+      {% endif %}
+    {% endfor %}
+
+    <fieldset class="form-section">
+      <h2><span class="step-num">{{ ns.section + 1 }}</span> Anything else &amp; consent</h2>
+      <div class="form-row">
+        <label for="other_factors">Anything else you would like a clinician to know? <span class="muted small">(optional)</span></label>
+        <textarea id="other_factors" name="other_factors" maxlength="1000">{{ values.get('other_factors') or '' }}</textarea>
+      </div>
+      <div class="form-row {{ 'field-error' if errors.get('consent') }}">
+        <label class="checkbox">
+          <input type="checkbox" name="consent" value="yes" required>
+          <span>I understand this is a <strong>screening tool, not a diagnosis</strong>. I consent to my answers and result being stored securely and reviewed by authorised mental health professionals for my care.</span>
+        </label>
+        {{ field_error(errors, 'consent') }}
+      </div>
+    </fieldset>
+    <button class="btn btn-primary" type="submit">Submit assessment</button>
+  </form>
+
+  <aside class="grid" style="align-content:start">
+    <div class="card">
+      <h3>Before you start</h3>
+      <ul class="muted small" style="padding-left:18px;margin:0">
+        <li>Think about the <strong>past month</strong> for wellbeing questions.</li>
+        <li>The GAD-7, PHQ-9 and AUDIT are standard questionnaires. If you don't know your scores, ask your unit medical officer.</li>
+        <li>You can reassess at any time to track changes.</li>
+      </ul>
+    </div>
+    {{ disclaimer('If you are in danger, call ' ~ support_line ~ ' now.') }}
+  </aside>
+</div>
+{% endblock %}

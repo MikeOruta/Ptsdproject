@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, risk_badge, disclaimer, factors %}
+{% block title %}Review assessment #{{ a.assessment_id }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="breadcrumb"><a href="{{ url_for('therapist.dashboard') }}">Caseload</a> / Assessment #{{ a.assessment_id }}</div>
+    <h1>{{ a.full_name }}</h1>
+    <p><span class="pill">{{ a.service_number }}</span> {{ a.military_rank or '' }} {{ ('· ' ~ a.branch) if a.branch }} · {{ a.email }}</p>
+  </div>
+  <button class="btn btn-outline no-print" type="button" data-print>Print</button>
+</div>
+
+<div class="result-hero {{ a.risk_category }}" style="margin-bottom:20px">
+  <div class="result-icon">{{ icon('alert' if a.risk_category == 'High' else ('info' if a.risk_category == 'Moderate' else 'check')) }}</div>
+  <div>
+    <div class="prob">Assessment of {{ a.created_at }}</div>
+    <div class="level">{{ a.risk_category }} risk</div>
+    <div class="prob">Model-estimated probability: {{ '%.1f'|format(a.probability * 100) }}%</div>
+  </div>
+</div>
+
+<div class="split">
+  <div class="grid" style="align-content:start">
+    <div class="card">
+      <h2>Contributing factors</h2>
+      {{ factors(raising, lowering) }}
+    </div>
+
+    <div class="card">
+      <h2>Responses</h2>
+      <dl class="kv">
+        <dt>Age / gender</dt><dd>{{ a.age }} · {{ a.gender|capitalize }}</dd>
+        <dt>Deployment length</dt><dd>{{ a.deployment_duration_months }} months</dd>
+        <dt>Combat exposure</dt><dd>{{ a.combat_exposure }} / 10</dd>
+        <dt>Prior trauma</dt><dd>{{ 'Yes' if a.prior_trauma else 'No' }}</dd>
+        <dt>Social isolation</dt><dd>{{ a.social_isolation }} / 10</dd>
+        <dt>Sleep disturbance</dt><dd>{{ a.sleep_score }} / 10</dd>
+        <dt>GAD-7 (anxiety)</dt><dd>{{ a.anxiety_score }} / 21</dd>
+        <dt>PHQ-9 (depression)</dt><dd>{{ a.depression_score }} / 27</dd>
+        <dt>AUDIT (alcohol)</dt><dd>{{ a.alcohol_use }} / 40</dd>
+        <dt>PCL-5</dt><dd>{{ a.pcl5_score if a.pcl5_score is not none else 'Not provided' }}</dd>
+        <dt>Other information</dt><dd style="font-weight:400;white-space:pre-wrap">{{ a.other_factors or 'None' }}</dd>
+        <dt>Consent</dt><dd>{{ 'Given' if a.consent_given else 'Not recorded' }}</dd>
+      </dl>
+    </div>
+
+    <div class="card">
+      <h2>Clinical notes</h2>
+      <form method="post" style="margin-bottom:20px" data-once>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-row">
+          <label for="note">Add a note</label>
+          <textarea id="note" name="note" maxlength="5000" required placeholder="Contact made, plan, referral…"></textarea>
+        </div>
+        <button class="btn btn-primary" type="submit">Save note</button>
+      </form>
+      {% for n in notes %}
+        <div class="note"><div class="meta">{{ n.full_name }} · {{ n.created_at }}</div><p>{{ n.note }}</p></div>
+      {% else %}
+        <p class="muted">No notes yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <aside class="grid" style="align-content:start">
+    <div class="card">
+      <h2>Assessment history</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Date</th><th>Risk</th><th class="num">Prob.</th></tr></thead>
+        <tbody>
+        {% for h in history %}
+          <tr {% if h.assessment_id == a.assessment_id %}style="background:var(--info-bg)"{% endif %}>
+            <td class="nowrap"><a href="{{ url_for('therapist.assessment', assessment_id=h.assessment_id) }}">{{ h.created_at[:10] }}</a></td>
+            <td>{{ risk_badge(h.risk_category) }}</td>
+            <td class="num">{{ '%.0f'|format(h.probability * 100) }}%</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+    </div>
+    {{ disclaimer('Your access to this record has been logged.') }}
+  </aside>
+</div>
+{% endblock %}

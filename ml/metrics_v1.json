@@ -1,6 +1,6 @@
 {
   "model_version": "v1",
-  "trained_at": "2026-09-28T15:52:08+00:00",
+  "trained_at": "2026-09-28T16:02:59+00:00",
   "data_file": "synthetic_ptsd_dataset.csv",
   "data_is_synthetic": true,
   "warning": "Trained on SYNTHETIC data: metrics demonstrate the method, not real-world accuracy. Decision-support only, not a medical diagnosis.",

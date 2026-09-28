@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1600 800" preserveAspectRatio="xMidYMax slice" role="img" aria-label="Silhouettes of soldiers on patrol at dusk with a helicopter overhead">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#081a33"/>
+      <stop offset=".38" stop-color="#1d3a64"/>
+      <stop offset=".62" stop-color="#6b5a6e"/>
+      <stop offset=".76" stop-color="#d0864a"/>
+      <stop offset=".84" stop-color="#f2bf6a"/>
+    </linearGradient>
+    <radialGradient id="sun" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#fff1c9"/>
+      <stop offset=".35" stop-color="#f8d488" stop-opacity=".95"/>
+      <stop offset="1" stop-color="#f2a654" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="haze" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f2bf6a" stop-opacity="0"/>
+      <stop offset="1" stop-color="#e59a52" stop-opacity=".55"/>
+    </linearGradient>
+    <!-- One walking soldier, facing right: helmet, pack, rifle at the ready. -->
+    <g id="soldier">
+      <path d="M19 12 C19 2 41 2 41 12 L44 15 L16 15 Z"/>
+      <ellipse cx="30" cy="19" rx="7" ry="7.5"/>
+      <rect x="10" y="26" width="12" height="27" rx="3"/>
+      <path d="M20 25 Q30 22 40 25 L44 58 Q30 62 17 58 Z"/>
+      <path d="M22 37 L66 29 L67 33.5 L24 42 Z"/>
+      <path d="M35 27 L48 36 L44 40.5 L32 33 Z"/>
+      <path d="M22 29 L31 41 L27 43.5 L18 33 Z"/>
+      <path d="M30 56 L42 56 L50 86 L57 115 L47 117 L40 90 Z"/>
+      <path d="M18 56 L30 56 L27 88 L21 117 L11 115 L17 86 Z"/>
+    </g>
+    <g id="heli">
+      <path d="M0 22 C0 10 14 4 34 6 L52 8 L100 12 L102 17 L54 20 C50 30 38 34 22 33 C8 32 0 29 0 22 Z"/>
+      <path d="M94 4 L104 4 L104 20 L98 20 Z"/>
+      <rect x="-30" y="0" width="130" height="2.4" rx="1.2"/>
+      <rect x="26" y="1" width="3" height="6"/>
+      <path d="M8 34 L44 34 L44 36.5 L8 36.5 Z"/>
+      <rect x="14" y="31" width="2.5" height="4"/><rect x="36" y="31" width="2.5" height="4"/>
+    </g>
+  </defs>
+
+  <rect width="1600" height="800" fill="url(#sky)"/>
+  <circle cx="1180" cy="590" r="210" fill="url(#sun)"/>
+  <circle cx="1180" cy="590" r="62" fill="#fbe2a6"/>
+
+  <!-- far mountains -->
+  <path d="M0 600 L120 548 L230 575 L360 520 L470 566 L600 530 L720 572 L860 518 L990 560 L1110 540 L1240 575 L1380 528 L1500 560 L1600 540 L1600 800 L0 800 Z" fill="#8a6a6a" opacity=".55"/>
+  <path d="M0 628 L140 590 L300 618 L430 585 L580 622 L740 596 L900 628 L1060 600 L1220 630 L1380 598 L1520 624 L1600 610 L1600 800 L0 800 Z" fill="#4b3f55" opacity=".8"/>
+  <rect y="560" width="1600" height="120" fill="url(#haze)"/>
+
+  <!-- helicopters -->
+  <use href="#heli" xlink:href="#heli" transform="translate(1290 230) scale(1.1)" fill="#14213a"/>
+  <use href="#heli" xlink:href="#heli" transform="translate(1460 300) scale(.6)" fill="#1d2c48" opacity=".85"/>
+
+  <!-- ridge the patrol walks along -->
+  <path d="M0 700 C220 676 420 690 640 672 C860 654 1040 662 1240 650 C1400 641 1520 648 1600 644 L1600 800 L0 800 Z" fill="#0a1426"/>
+
+  <!-- patrol, front to back gets smaller for depth -->
+  <g fill="#0a1426">
+    <use href="#soldier" xlink:href="#soldier" transform="translate(1390 470) scale(1.55)"/>
+    <use href="#soldier" xlink:href="#soldier" transform="translate(1240 488) scale(1.45)"/>
+    <use href="#soldier" xlink:href="#soldier" transform="translate(1098 506) scale(1.35)"/>
+    <use href="#soldier" xlink:href="#soldier" transform="translate(970 526) scale(1.22)"/>
+    <use href="#soldier" xlink:href="#soldier" transform="translate(860 544) scale(1.1)"/>
+    <!-- radio antenna on the second soldier -->
+    <path d="M1258 520 L1244 420" stroke="#0a1426" stroke-width="2.5"/>
+  </g>
+
+  <!-- grass tufts in the foreground -->
+  <g fill="#060e1c">
+    <path d="M0 800 L0 740 C160 720 380 742 600 728 C820 714 1040 736 1260 716 C1420 704 1520 716 1600 710 L1600 800 Z"/>
+    <path d="M1180 716 l6 -26 l4 26 z M1206 714 l8 -34 l3 34 z M1520 712 l5 -22 l4 22 z M300 736 l6 -24 l4 24 z M760 724 l7 -30 l3 30 z"/>
+  </g>
+</svg>

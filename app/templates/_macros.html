@@ -1,0 +1,73 @@
+{# Reusable page pieces. #}
+
+{% macro icon(name) -%}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+{%- if name == 'shield' -%}<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>
+{%- elif name == 'chart' -%}<path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/>
+{%- elif name == 'lock' -%}<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+{%- elif name == 'clipboard' -%}<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4h6v3H9z"/><path d="M9 12h6M9 16h4"/>
+{%- elif name == 'users' -%}<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/>
+{%- elif name == 'alert' -%}<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>
+{%- elif name == 'info' -%}<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>
+{%- elif name == 'check' -%}<circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/>
+{%- elif name == 'activity' -%}<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+{%- elif name == 'heart' -%}<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z"/>
+{%- elif name == 'server' -%}<rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/>
+{%- elif name == 'eye' -%}<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/>
+{%- endif -%}
+</svg>
+{%- endmacro %}
+
+{% macro risk_badge(category) -%}
+<span class="risk risk-{{ category }}">{{ category }}</span>
+{%- endmacro %}
+
+{% macro disclaimer(extra='') -%}
+<div class="disclaimer" role="note">
+  {{ icon('info') }}
+  <div><strong>Decision-support only, not a medical diagnosis.</strong> {{ extra }}</div>
+</div>
+{%- endmacro %}
+
+{% macro field_error(errors, name) -%}
+{% if errors and errors.get(name) %}<div class="error-text" id="{{ name }}-error">{{ errors[name] }}</div>{% endif %}
+{%- endmacro %}
+
+{# Risk probability over time, with shaded Low / Moderate / High bands. #}
+{% macro trend_chart(points, moderate, high, width=600, height=160, pad=20) -%}
+{% set inner = height - 2 * pad %}
+<div class="trend">
+<svg viewBox="0 0 {{ width }} {{ height }}" role="img" aria-label="Chart of PTSD risk probability across assessments">
+  <rect class="band-high" x="{{ pad }}" y="{{ pad }}" width="{{ width - 2 * pad }}" height="{{ inner * (1 - high) }}"/>
+  <rect class="band-mod" x="{{ pad }}" y="{{ pad + inner * (1 - high) }}" width="{{ width - 2 * pad }}" height="{{ inner * (high - moderate) }}"/>
+  <rect class="band-low" x="{{ pad }}" y="{{ pad + inner * (1 - moderate) }}" width="{{ width - 2 * pad }}" height="{{ inner * moderate }}"/>
+  <text x="{{ width - pad - 4 }}" y="{{ pad + 14 }}" text-anchor="end" font-size="11" fill="#b42318">High</text>
+  <text x="{{ width - pad - 4 }}" y="{{ height - pad - 6 }}" text-anchor="end" font-size="11" fill="#1f7a4d">Low</text>
+  {% if points|length > 1 %}<polyline points="{% for p in points %}{{ p.x }},{{ p.y }} {% endfor %}"/>{% endif %}
+  {% for p in points %}
+    <circle cx="{{ p.x }}" cy="{{ p.y }}" r="6" fill="{{ {'Low': '#1f7a4d', 'Moderate': '#a35c00', 'High': '#b42318'}[p.row.risk_category] }}">
+      <title>{{ p.row.created_at[:10] }}: {{ p.row.risk_category }} ({{ '%.0f'|format(p.row.probability * 100) }}%)</title>
+    </circle>
+  {% endfor %}
+</svg>
+</div>
+{%- endmacro %}
+
+{# Bars showing which answers raised or lowered this person's risk. #}
+{% macro factors(raising, lowering) -%}
+{% set biggest = ((raising + lowering)|map(attribute='contribution')|map('abs')|max) if (raising or lowering) else 1 %}
+{% if raising %}
+  <p class="small muted" style="margin-bottom:10px">Answers that <strong>raised</strong> the estimated risk most:</p>
+  {% for f in raising %}
+  <div class="factor"><span>{{ f.label }}</span><span class="bar"><i style="width: {{ (f.contribution / biggest * 100)|round|int }}%"></i></span></div>
+  {% endfor %}
+{% endif %}
+{% if lowering %}
+  <p class="small muted" style="margin:16px 0 10px">Answers that <strong>lowered</strong> it:</p>
+  {% for f in lowering %}
+  <div class="factor down"><span>{{ f.label }}</span><span class="bar"><i style="width: {{ (f.contribution|abs / biggest * 100)|round|int }}%"></i></span></div>
+  {% endfor %}
+{% endif %}
+{% if not raising and not lowering %}<p class="muted">No single answer stood out; the result reflects the overall pattern.</p>{% endif %}
+<p class="small muted" style="margin-top:14px">Compared with an average person in the training data. Based on the model's coefficients, which is what makes Logistic Regression interpretable.</p>
+{%- endmacro %}
