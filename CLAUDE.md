@@ -5,7 +5,11 @@
 - Started afresh: the earlier sample CSV / train_model.py / data_schema_unified.sql were
   not available, so the schema is written from scratch in db/schema.sql and the dataset
   is generated synthetically in Phase 2.
-- MySQL comes from XAMPP: C:\xampp\mysql\bin\mysql.exe (start MySQL in the XAMPP Control Panel).
+- DATABASE DECISION: switched from MySQL to SQLite (built into Python, no server,
+  one file at db/ptsd_system.db). Reason: the "lightweight and low-resource" design
+  goal. This overrides every mention of MySQL in the master prompt below. Create or
+  reset the database with `python db/init_db.py`. Run `PRAGMA foreign_keys = ON` on
+  every connection.
 
 ## Master prompt
 
@@ -15,7 +19,7 @@ BBIT). I'm on Windows, so use PowerShell-compatible commands. I must be able to 
 and defend every part of this code, so briefly explain each step as you go, keep the
 code simple and commented, and stop at the end of each phase for my review.
 
-STACK: Python 3, Flask, scikit-learn, MySQL, HTML/CSS/JS with Jinja2 templates.
+STACK: Python 3, Flask, scikit-learn, SQLite (originally MySQL), HTML/CSS/JS with Jinja2 templates.
 No heavy frameworks. Design goal is lightweight and low-resource.
 
 STEP 0 - HOUSEKEEPING (do first)
@@ -34,6 +38,7 @@ users (role: military_personnel / therapist / administrator), military_personnel
 therapists, admins (1:1 profile tables, user_id UNIQUE), system_logs, assessments,
 prediction_results (1:1 with assessments), therapist_notes, assessment_questions,
 ml_models. Run the script to create database ptsd_system and verify all tables exist.
+(Schema: db/schema.sql, SQLite syntax.)
 
 KNOWN ISSUES - resolve these BEFORE Phase 2
 A. The assessments table must also hold age, gender, deployment_duration_months,

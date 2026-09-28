@@ -6,5 +6,8 @@ __pycache__/
 # Secrets (database password etc.) - never commit
 .env
 
+# SQLite database file - holds user data, never commit
+*.db
+
 # Log files
 *.log
