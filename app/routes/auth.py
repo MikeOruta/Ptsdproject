@@ -41,7 +41,8 @@ def safe_next(target):
 @bp.route("/login", methods=["GET", "POST"])
 def login():
     role = request.values.get("role", "military_personnel")
-    if role not in ROLES:
+    valid_roles = ("military_personnel", "therapist", "administrator")
+    if role not in valid_roles:
         role = "military_personnel"
 
     if request.method == "POST":
@@ -76,7 +77,15 @@ def login():
 
 @bp.route("/register", methods=["GET", "POST"])
 def register():
-    """Self-registration for service members only."""
+    """Self-registration for service members and clinicians.
+
+    Administrators are created directly by the system administrator and are not
+    available on the public registration page.
+    """
+    role = request.values.get("role", "military_personnel")
+    if role not in ("military_personnel", "therapist"):
+        role = "military_personnel"
+
     form = {}
     if request.method == "POST":
         form = {
@@ -85,6 +94,8 @@ def register():
             "service_number": clean_text(request.form.get("service_number"), 50).upper(),
             "branch": clean_text(request.form.get("branch"), 100),
             "military_rank": clean_text(request.form.get("military_rank"), 100),
+            "license_number": clean_text(request.form.get("license_number"), 100).upper(),
+            "specialization": clean_text(request.form.get("specialization"), 150),
         }
         password = request.form.get("password", "")
         errors = []
@@ -92,8 +103,10 @@ def register():
             errors.append("Enter your full name.")
         if err := validate_email(form["email"]):
             errors.append(err)
-        if not form["service_number"]:
+        if role == "military_personnel" and not form["service_number"]:
             errors.append("Enter your service number.")
+        if role == "therapist" and not form["license_number"]:
+            errors.append("Enter your professional licence number.")
         if err := validate_password(password):
             errors.append(err)
         if password != request.form.get("confirm_password", ""):
@@ -105,23 +118,29 @@ def register():
                 with db:  # users row and profile row are saved together, or not at all
                     cur = db.execute(
                         """INSERT INTO users (email, password_hash, full_name, role)
-                           VALUES (?, ?, ?, 'military_personnel')""",
-                        (form["email"], generate_password_hash(password), form["full_name"]))
-                    db.execute(
-                        """INSERT INTO military_personnel (user_id, service_number, branch, military_rank)
                            VALUES (?, ?, ?, ?)""",
-                        (cur.lastrowid, form["service_number"], form["branch"] or None,
-                         form["military_rank"] or None))
+                        (form["email"], generate_password_hash(password), form["full_name"], role))
+                    if role == "military_personnel":
+                        db.execute(
+                            """INSERT INTO military_personnel (user_id, service_number, branch, military_rank)
+                               VALUES (?, ?, ?, ?)""",
+                            (cur.lastrowid, form["service_number"], form["branch"] or None,
+                             form["military_rank"] or None))
+                    else:
+                        db.execute(
+                            """INSERT INTO therapists (user_id, license_number, specialization)
+                               VALUES (?, ?, ?)""",
+                            (cur.lastrowid, form["license_number"], form["specialization"] or None))
             except sqlite3.IntegrityError:
-                errors.append("An account with this email or service number already exists.")
+                errors.append("An account with this email, service number or licence number already exists.")
             else:
-                log_action("register", form["email"], user_id=cur.lastrowid)
+                log_action("register", f"role={role} email={form['email']}", user_id=cur.lastrowid)
                 flash("Account created. You can now sign in.", "success")
-                return redirect(url_for("auth.login"))
+                return redirect(url_for("auth.login", role=role))
 
         for e in errors:
             flash(e, "error")
-    return render_template("auth/register.html", form=form)
+    return render_template("auth/register.html", form=form, role=role)
 
 
 @bp.route("/logout", methods=["POST"])

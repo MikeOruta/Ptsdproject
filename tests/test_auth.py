@@ -14,6 +14,22 @@ def test_register_then_login(client, app):
     assert r.status_code == 302 and "/personnel" in r.headers["Location"]
 
 
+def test_therapist_register_then_login(client):
+    data = {
+        "role": "therapist",
+        "full_name": "Dr. Sarah Reid",
+        "email": "sarah@example.org",
+        "license_number": "LIC-456",
+        "specialization": "PTSD recovery",
+        "password": PASSWORD,
+        "confirm_password": PASSWORD,
+    }
+    r = client.post("/auth/register", data=data)
+    assert r.status_code == 302
+    r = login(client, "sarah@example.org", "therapist")
+    assert r.status_code == 302 and "/therapist" in r.headers["Location"]
+
+
 def test_password_is_hashed_not_plain(client, app):
     client.post("/auth/register", data=REGISTRATION)
     stored = sqlite3.connect(app.config["DB_PATH"]).execute(

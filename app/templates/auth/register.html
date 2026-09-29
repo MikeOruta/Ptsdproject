@@ -3,12 +3,20 @@
 {% block content %}
 <div style="max-width:640px;margin:0 auto">
   <div class="page-head"><div>
-    <h1>Register as a service member</h1>
-    <p>Create an account to complete confidential PTSD risk assessments.</p>
+    <h1>{% if role == 'therapist' %}Register as a mental health professional{% else %}Register as a service member{% endif %}</h1>
+    <p>{% if role == 'therapist' %}Create an authorised clinical account for reviewing service-member assessments.{% else %}Create an account to complete confidential PTSD risk assessments.{% endif %}</p>
   </div></div>
+
+  <div class="card" style="padding:18px 18px 8px; margin-bottom:18px">
+    <div class="tabs" aria-label="Registration role">
+      <a href="{{ url_for('auth.register', role='military_personnel') }}" {% if role == 'military_personnel' %}aria-current="page"{% endif %}>Service Member</a>
+      <a href="{{ url_for('auth.register', role='therapist') }}" {% if role == 'therapist' %}aria-current="page"{% endif %}>Mental Health Professional</a>
+    </div>
+  </div>
 
   <form method="post" class="card" data-once>
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="role" value="{{ role }}">
     <div class="form-row">
       <label for="full_name">Full name</label>
       <input id="full_name" name="full_name" type="text" autocomplete="name" required maxlength="150" value="{{ form.full_name or '' }}">
@@ -17,24 +25,40 @@
       <label for="email">Email address</label>
       <input id="email" name="email" type="email" autocomplete="email" required maxlength="255" value="{{ form.email or '' }}">
     </div>
-    <div class="grid grid-3" style="gap:16px">
-      <div class="form-row">
-        <label for="service_number">Service number</label>
-        <input id="service_number" name="service_number" type="text" required maxlength="50" value="{{ form.service_number or '' }}">
+
+    {% if role == 'military_personnel' %}
+      <div class="grid grid-3" style="gap:16px">
+        <div class="form-row">
+          <label for="service_number">Service number</label>
+          <input id="service_number" name="service_number" type="text" required maxlength="50" value="{{ form.service_number or '' }}">
+        </div>
+        <div class="form-row">
+          <label for="military_rank">Rank <span class="muted small">(optional)</span></label>
+          <input id="military_rank" name="military_rank" type="text" maxlength="100" value="{{ form.military_rank or '' }}">
+        </div>
+        <div class="form-row">
+          <label for="branch">Branch <span class="muted small">(optional)</span></label>
+          <select id="branch" name="branch">
+            {% for b in ['', 'Army', 'Navy', 'Air Force', 'Other'] %}
+              <option value="{{ b }}" {% if form.branch == b %}selected{% endif %}>{{ b or 'Select…' }}</option>
+            {% endfor %}
+          </select>
+        </div>
       </div>
-      <div class="form-row">
-        <label for="military_rank">Rank <span class="muted small">(optional)</span></label>
-        <input id="military_rank" name="military_rank" type="text" maxlength="100" value="{{ form.military_rank or '' }}">
+    {% else %}
+      <div class="grid grid-2" style="gap:16px">
+        <div class="form-row">
+          <label for="license_number">Licence / registration number</label>
+          <input id="license_number" name="license_number" type="text" required maxlength="100" value="{{ form.license_number or '' }}">
+        </div>
+        <div class="form-row">
+          <label for="specialization">Specialisation</label>
+          <input id="specialization" name="specialization" type="text" maxlength="150" value="{{ form.specialization or '' }}">
+        </div>
       </div>
-      <div class="form-row">
-        <label for="branch">Branch <span class="muted small">(optional)</span></label>
-        <select id="branch" name="branch">
-          {% for b in ['', 'Army', 'Navy', 'Air Force', 'Other'] %}
-            <option value="{{ b }}" {% if form.branch == b %}selected{% endif %}>{{ b or 'Select…' }}</option>
-          {% endfor %}
-        </select>
-      </div>
-    </div>
+      <p class="small muted">Professional accounts must be approved by an administrator before they can access clinical review features.</p>
+    {% endif %}
+
     <div class="form-row">
       <label for="password">Password</label>
       <span class="hint">At least 10 characters, including letters and numbers.</span>
@@ -44,9 +68,9 @@
       <label for="confirm_password">Confirm password</label>
       <input id="confirm_password" name="confirm_password" type="password" autocomplete="new-password" required minlength="10">
     </div>
-    <p class="small muted">By registering you agree to the <a href="{{ url_for('main.privacy') }}">privacy notice</a>. Mental health professionals and administrators do not register here; their accounts are created by an administrator.</p>
+    <p class="small muted">By registering you agree to the <a href="{{ url_for('main.privacy') }}">privacy notice</a>. Internal staff accounts are created through the secure admin controls and are not available on this public form.</p>
     <button class="btn btn-primary" type="submit">Create account</button>
-    <a class="btn btn-outline" href="{{ url_for('auth.login') }}" style="margin-left:6px">I already have an account</a>
+    <a class="btn btn-outline" href="{{ url_for('auth.login', role=role) }}" style="margin-left:6px">I already have an account</a>
   </form>
 </div>
 {% endblock %}

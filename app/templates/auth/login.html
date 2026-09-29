@@ -13,19 +13,18 @@
     <div class="auth-card">
       {% include "_flashes.html" %}
       <h1>Sign in</h1>
-      <p class="muted">Choose your role, then enter your details.</p>
-
-      {# Tabs are plain links, so they work without JavaScript. The server
-         still checks the chosen role against the account's real role. #}
-      <nav class="tabs" aria-label="Sign-in role">
-        {% for r, label in [('military_personnel', 'Service Member'), ('therapist', 'Mental Health Professional'), ('administrator', 'Administrator')] %}
-          <a href="{{ url_for('auth.login', role=r, next=request.args.get('next')) }}" {% if role == r %}aria-current="page"{% endif %}>{{ label }}</a>
-        {% endfor %}
-      </nav>
+      <p class="muted">Enter your details to continue.</p>
 
       <form method="post" action="{{ url_for('auth.login', role=role, next=request.args.get('next')) }}" class="card">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <input type="hidden" name="role" value="{{ role }}">
+        <div class="form-row">
+          <label for="role">Access as</label>
+          <select id="role" name="role">
+            {% for r, label in [('military_personnel', 'Service Member'), ('therapist', 'Mental Health Professional')] %}
+              <option value="{{ r }}" {% if role == r %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
         <div class="form-row">
           <label for="email">Email address</label>
           <input id="email" name="email" type="email" autocomplete="username" required value="{{ email }}" autofocus>
@@ -37,11 +36,8 @@
         <button class="btn btn-primary btn-block" type="submit">Sign in as {{ role_labels[role] }}</button>
       </form>
 
-      {% if role == 'military_personnel' %}
-        <p style="margin-top:18px">New here? <a href="{{ url_for('auth.register') }}">Register as a service member</a></p>
-      {% else %}
-        <p class="small muted" style="margin-top:18px">Staff accounts are created by a system administrator.</p>
-      {% endif %}
+      <p style="margin-top:18px">New here? <a href="{{ url_for('auth.register') }}">Register</a></p>
+      <p class="small muted" style="margin-top:6px">Authorised staff access is granted through the secure internal sign-in route.</p>
     </div>
   </div>
 </div>
