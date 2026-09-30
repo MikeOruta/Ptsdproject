@@ -18,14 +18,22 @@
 
       <form method="post" action="{{ url_for('auth.login', role=role, next=request.args.get('next')) }}" class="card">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div class="form-row">
-          <label for="role">Access as</label>
-          <select id="role" name="role">
-            {% for r, label in [('military_personnel', 'Service Member'), ('therapist', 'Mental Health Professional')] %}
-              <option value="{{ r }}" {% if role == r %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-          </select>
-        </div>
+        {% if role == 'administrator' %}
+          <input type="hidden" name="role" value="administrator">
+          <div class="form-row">
+            <span class="label">Access as</span>
+            <div class="role-badge administrator">Administrator</div>
+          </div>
+        {% else %}
+          <div class="form-row">
+            <label for="role">Access as</label>
+            <select id="role" name="role">
+              {% for r, label in [('military_personnel', 'Service Member'), ('therapist', 'Mental Health Professional')] %}
+                <option value="{{ r }}" {% if role == r %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        {% endif %}
         <div class="form-row">
           <label for="email">Email address</label>
           <input id="email" name="email" type="email" autocomplete="username" required value="{{ email }}" autofocus>
