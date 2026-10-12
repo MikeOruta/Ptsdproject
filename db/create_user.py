@@ -1,8 +1,10 @@
 """Create a staff account from the command line (used to create the FIRST
-administrator, who can then create everyone else in the web console).
+administrator, who can then create everyone else in the web console), or reset
+the password of an existing account.
 
 Usage (from the project root):
     python -m db.create_user --role administrator --email you@example.org --name "Your Name"
+    python -m db.create_user --reset --email you@example.org
 The password is typed privately (not shown, not saved in shell history).
 """
 import argparse
@@ -17,21 +19,53 @@ from app.db import get_db
 from app.validation import validate_email, validate_password
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--role", choices=["administrator", "therapist"], required=True)
-    parser.add_argument("--email", required=True)
-    parser.add_argument("--name", required=True)
-    args = parser.parse_args()
-
-    email = args.email.strip().lower()
-    if err := validate_email(email):
-        sys.exit(err)
+def ask_password():
+    """Prompt twice for a password and validate it."""
     password = getpass.getpass("Password: ")
     if err := validate_password(password):
         sys.exit(err)
     if password != getpass.getpass("Repeat password: "):
         sys.exit("Passwords do not match.")
+    return password
+
+
+def reset_password(email):
+    """Replace the stored hash for an existing account and log it."""
+    password = ask_password()
+    with create_app().app_context():
+        db = get_db()
+        with db:
+            user = db.execute("SELECT user_id FROM users WHERE email = ?", (email,)).fetchone()
+            if user is None:
+                sys.exit("No account with that email.")
+            db.execute("UPDATE users SET password_hash = ? WHERE user_id = ?",
+                       (generate_password_hash(password), user["user_id"]))
+            # Audit trail: no web request here, so no IP address.
+            db.execute("INSERT INTO system_logs (user_id, action, details) VALUES (?, ?, ?)",
+                       (user["user_id"], "password_reset", "Reset from command line"))
+    print(f"Password reset for {email}.")
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--reset", action="store_true",
+                        help="reset the password of an existing account")
+    parser.add_argument("--role", choices=["administrator", "therapist"])
+    parser.add_argument("--email", required=True)
+    parser.add_argument("--name")
+    args = parser.parse_args()
+
+    email = args.email.strip().lower()
+    if err := validate_email(email):
+        sys.exit(err)
+
+    if args.reset:
+        reset_password(email)
+        return
+
+    if not args.role or not args.name:
+        parser.error("--role and --name are required when creating an account")
+    password = ask_password()
 
     with create_app().app_context():
         db = get_db()
