@@ -21,7 +21,7 @@ ROLE_LABELS = {
 # Where each role lands after logging in.
 ROLE_HOME = {
     "military_personnel": "personnel.dashboard",
-    "therapist": "therapist.dashboard",
+    "therapist": "therapist.dashboard_legacy",
     "administrator": "admin.dashboard",
 }
 

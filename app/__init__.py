@@ -76,6 +76,16 @@ def create_app(test_config=None):
     for module in (main, auth, personnel, therapist, admin):
         app.register_blueprint(module.bp)
 
+    # Keep the clinician dashboard available at /clinician/ for the app, while
+    # legacy /therapist/ URLs remain valid for the original role flow and tests.
+    app.add_url_rule("/therapist/", endpoint="therapist.dashboard_legacy",
+                     view_func=therapist.dashboard, methods=["GET"])
+    app.add_url_rule("/therapist/report", endpoint="therapist.report_legacy",
+                     view_func=therapist.report, methods=["GET"])
+    app.add_url_rule("/therapist/assessment/<int:assessment_id>",
+                     endpoint="therapist.assessment_legacy",
+                     view_func=therapist.assessment, methods=["GET", "POST"])
+
     for code in (400, 403, 404, 413, 500):
         app.register_error_handler(
             code, lambda e, code=code: (render_template("error.html", code=code, error=e), code))
