@@ -30,8 +30,9 @@ def app(tmp_path):
     conn.execute("INSERT INTO ml_models (version, file_path, is_active) VALUES ('test', 'ml/model_v1.pkl', 1)")
     conn.commit()
     conn.close()
+    # MAIL_SERVER="" keeps tests in email test mode: they never send real emails.
     return create_app({"DB_PATH": str(db_path), "SECRET_KEY": "test-secret", "CSRF_ENABLED": False,
-                       "TESTING": True})
+                       "TESTING": True, "MAIL_SERVER": ""})
 
 
 @pytest.fixture

@@ -20,7 +20,9 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 def create_app(test_config=None):
     # Read settings from .env so secrets never live in the code.
-    load_dotenv(PROJECT_ROOT / ".env")
+    # override=True: the .env file always wins, so edits to it take effect on
+    # the next restart even if an older value is still loaded in the process.
+    load_dotenv(PROJECT_ROOT / ".env", override=True)
 
     app = Flask(__name__)
     app.config.update(

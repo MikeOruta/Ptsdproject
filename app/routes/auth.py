@@ -16,7 +16,7 @@ from flask import Blueprint, flash, g, redirect, render_template, request, sessi
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.db import get_db
-from app.mailer import read_verify_token, send_verification_email
+from app.mailer import mail_configured, read_verify_token, send_verification_email
 from app.security import ROLE_HOME, ROLES, log_action
 from app.validation import clean_text, validate_email, validate_password
 
@@ -188,7 +188,7 @@ def check_email():
             else:
                 flash("We could not send another email right now. Please try again later.", "error")
         return redirect(url_for("auth.check_email"))
-    return render_template("auth/check_email.html", email=email)
+    return render_template("auth/check_email.html", email=email, mail_configured=mail_configured())
 
 
 @bp.route("/verify/<token>")

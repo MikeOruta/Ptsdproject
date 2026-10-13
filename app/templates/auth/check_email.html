@@ -12,6 +12,10 @@
     <p>Open the email and click the link to confirm it is you. The link expires in 24 hours.
        Then come back and sign in.</p>
     <p class="small muted">Can't find it? Check your spam or junk folder.</p>
+    {% if not mail_configured %}
+    <div class="alert alert-error small" style="margin-top:12px"><strong>Test mode:</strong> email sending is not set up
+      in .env, so the email was not really sent. The link is printed in the server terminal.</div>
+    {% endif %}
 
     <form method="post" style="margin-top:18px" data-once>
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

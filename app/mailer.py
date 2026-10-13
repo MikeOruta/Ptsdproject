@@ -39,13 +39,19 @@ def read_verify_token(token):
     return data.get("uid"), data.get("email")
 
 
+def mail_configured():
+    """True when .env has a mail server AND login details, so real emails can be sent."""
+    cfg = current_app.config
+    return bool(cfg.get("MAIL_SERVER") and cfg.get("MAIL_USERNAME") and cfg.get("MAIL_PASSWORD"))
+
+
 def send_email(to, subject, body):
     """Send a plain-text email. Returns True if it was sent (or printed in dev mode)."""
     cfg = current_app.config
-    if not cfg.get("MAIL_SERVER"):
-        # Development mode: no mail server configured, so show it in the terminal.
-        print(f"\n--- EMAIL (not sent: MAIL_SERVER not set) ---\nTo: {to}\nSubject: {subject}\n\n{body}\n---\n",
-              flush=True)
+    if not mail_configured():
+        # Development mode: email not set up in .env, so show it in the terminal.
+        print(f"\n--- EMAIL (not sent: email settings in .env are incomplete) ---\n"
+              f"To: {to}\nSubject: {subject}\n\n{body}\n---\n", flush=True)
         return True
 
     msg = EmailMessage()
@@ -56,8 +62,7 @@ def send_email(to, subject, body):
     try:
         with smtplib.SMTP(cfg["MAIL_SERVER"], cfg["MAIL_PORT"], timeout=15) as smtp:
             smtp.starttls()                                   # encrypt the connection
-            if cfg.get("MAIL_USERNAME"):
-                smtp.login(cfg["MAIL_USERNAME"], cfg["MAIL_PASSWORD"])
+            smtp.login(cfg["MAIL_USERNAME"], cfg["MAIL_PASSWORD"])
             smtp.send_message(msg)
     except (smtplib.SMTPException, OSError) as e:
         current_app.logger.error("Could not send email to %s: %s", to, e)
