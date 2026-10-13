@@ -1,20 +1,57 @@
 """Registration, login, logout, lockout and password storage."""
 import sqlite3
 
+from app.mailer import make_verify_token
 from tests.conftest import PASSWORD, login
 
 REGISTRATION = {"full_name": "Jane Soldier", "email": "jane@example.org", "service_number": "sn123",
                 "password": PASSWORD, "confirm_password": PASSWORD}
 
 
+def verify(client, app, email):
+    """Open the emailed confirmation link for this account (same token the email contains)."""
+    uid = sqlite3.connect(app.config["DB_PATH"]).execute(
+        "SELECT user_id FROM users WHERE email = ?", (email,)).fetchone()[0]
+    with app.test_request_context():
+        token = make_verify_token(uid, email)
+    return client.get(f"/auth/verify/{token}")
+
+
 def test_register_then_login(client, app):
     r = client.post("/auth/register", data=REGISTRATION)
-    assert r.status_code == 302                       # redirected to login
+    assert r.status_code == 302 and "/auth/check-email" in r.headers["Location"]
+    r = verify(client, app, "jane@example.org")
+    assert r.status_code == 200 and b"Email verified" in r.data
     r = login(client, "jane@example.org", "military_personnel")
     assert r.status_code == 302 and "/personnel" in r.headers["Location"]
 
 
-def test_therapist_register_then_login(client):
+def test_unverified_user_cannot_login(client, app):
+    client.post("/auth/register", data=REGISTRATION)
+    r = login(client, "jane@example.org", "military_personnel")
+    assert r.status_code == 302 and "/auth/check-email" in r.headers["Location"]
+    assert client.get("/personnel/").status_code == 302      # still not signed in
+
+
+def test_invalid_verification_link_rejected(client, app):
+    client.post("/auth/register", data=REGISTRATION)
+    r = client.get("/auth/verify/not-a-real-token")
+    assert r.status_code == 400
+    verified = sqlite3.connect(app.config["DB_PATH"]).execute(
+        "SELECT email_verified FROM users WHERE email = 'jane@example.org'").fetchone()[0]
+    assert verified == 0
+
+
+def test_resend_is_limited(client, app):
+    client.post("/auth/register", data=REGISTRATION)          # first email
+    for _ in range(5):
+        client.post("/auth/check-email")
+    sent = sqlite3.connect(app.config["DB_PATH"]).execute(
+        "SELECT COUNT(*) FROM system_logs WHERE action = 'verification_sent'").fetchone()[0]
+    assert sent == 3
+
+
+def test_therapist_register_then_login(client, app):
     data = {
         "role": "therapist",
         "full_name": "Dr. Sarah Reid",
@@ -26,6 +63,7 @@ def test_therapist_register_then_login(client):
     }
     r = client.post("/auth/register", data=data)
     assert r.status_code == 302
+    verify(client, app, "sarah@example.org")
     r = login(client, "sarah@example.org", "therapist")
     assert r.status_code == 302 and "/therapist" in r.headers["Location"]
 

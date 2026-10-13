@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 from flask import Flask, g, render_template
 
 from app import security
-from app.db import close_db
+from app.db import close_db, upgrade_db
 from app.ml_service import model_service
 from ml.features import RISK_THRESHOLDS
 
@@ -41,12 +41,22 @@ def create_app(test_config=None):
         PERMANENT_SESSION_LIFETIME=timedelta(minutes=30),
         MAX_CONTENT_LENGTH=5 * 1024 * 1024,   # 5 MB upload limit (model files)
         CSRF_ENABLED=True,
+        # Outgoing email (verification links). Leave MAIL_SERVER empty to print
+        # emails to the terminal instead of sending them.
+        MAIL_SERVER=os.getenv("MAIL_SERVER", ""),
+        MAIL_PORT=int(os.getenv("MAIL_PORT", "587")),
+        MAIL_USERNAME=os.getenv("MAIL_USERNAME", ""),
+        MAIL_PASSWORD=os.getenv("MAIL_PASSWORD", ""),
+        MAIL_FROM=os.getenv("MAIL_FROM", ""),
     )
     if test_config:
         app.config.update(test_config)
 
     if not app.config["SECRET_KEY"] or app.config["SECRET_KEY"] == "change-me":
         raise RuntimeError("Set a real SECRET_KEY in .env (see .env.example).")
+
+    # Add any new columns to an existing database (keeps all data).
+    upgrade_db(app.config["DB_PATH"])
 
     # Load the ML model once, at startup.
     model_service.load_active(app.config["DB_PATH"])

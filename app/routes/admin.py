@@ -49,9 +49,24 @@ def dashboard():
     recent = db.execute(
         """SELECT l.*, u.email FROM system_logs l LEFT JOIN users u USING (user_id)
            ORDER BY l.log_id DESC LIMIT 8""").fetchall()
+    # Newest accounts, so the admin can see who has just registered.
+    new_users = db.execute(
+        """SELECT full_name, email, role, created_at FROM users
+           ORDER BY created_at DESC, user_id DESC LIMIT 8""").fetchall()
+    # Latest successful sign-ins, taken from the audit trail.
+    sign_ins = db.execute(
+        """SELECT l.created_at, u.full_name, u.email, u.role
+           FROM system_logs l JOIN users u USING (user_id)
+           WHERE l.action = 'login' ORDER BY l.log_id DESC LIMIT 8""").fetchall()
+    stats["new_this_week"] = db.execute(
+        "SELECT COUNT(*) FROM users WHERE created_at >= datetime('now', '-7 days')").fetchone()[0]
+    stats["signed_in_today"] = db.execute(
+        """SELECT COUNT(DISTINCT user_id) FROM system_logs
+           WHERE action = 'login' AND date(created_at) = date('now')""").fetchone()[0]
     return render_template("admin/dashboard.html", users_by_role=users_by_role, stats=stats,
                            model=model, metrics=metrics, model_loaded=model_service.ready,
-                           model_error=model_service.error, recent=recent)
+                           model_error=model_service.error, recent=recent,
+                           new_users=new_users, sign_ins=sign_ins)
 
 
 # ------------------------------------------------------------ users
@@ -92,12 +107,13 @@ def users():
             flash(e, "error")
 
     role = request.args.get("role", "")
-    sql = "SELECT * FROM users"
+    # is_new flags accounts created in the last 7 days.
+    sql = "SELECT *, created_at >= datetime('now', '-7 days') AS is_new FROM users"
     params = []
     if role in ROLES:
         sql += " WHERE role = ?"
         params.append(role)
-    rows = db.execute(sql + " ORDER BY created_at DESC", params).fetchall()
+    rows = db.execute(sql + " ORDER BY created_at DESC, user_id DESC", params).fetchall()
     return render_template("admin/users.html", users=rows, role=role)
 
 

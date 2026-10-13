@@ -134,6 +134,15 @@ input[type=text], input[type=email], input[type=password], input[type=number], i
 }
 input:focus, select:focus, textarea:focus { border-color: var(--navy-600); outline: none; box-shadow: 0 0 0 3px rgba(29, 68, 119, .18); }
 input[type=number] { max-width: 180px; }
+/* Show/hide password button, added by app.js and placed inside the field on the right. */
+.password-wrap { position: relative; }
+.password-wrap input { padding-right: 72px; }
+.password-toggle {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  padding: 4px 10px; border: 0; border-radius: 6px; background: var(--info-bg);
+  color: var(--navy-600); font: inherit; font-size: .85rem; font-weight: 600; cursor: pointer;
+}
+.password-toggle:hover, .password-toggle:focus { background: var(--gold-soft); outline: none; }
 textarea { min-height: 100px; resize: vertical; }
 .field-error input, .field-error select { border-color: var(--high); }
 .error-text { color: var(--high); font-size: .875rem; font-weight: 600; margin-top: 6px; }

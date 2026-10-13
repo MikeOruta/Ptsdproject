@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Confirm your email{% endblock %}
+{% block content %}
+<div style="max-width:560px;margin:0 auto">
+  <div class="page-head"><div>
+    <h1>Check your email</h1>
+    <p>One more step before you can sign in.</p>
+  </div></div>
+
+  <div class="card">
+    <p>We have sent a confirmation link to <strong>{{ email }}</strong>.</p>
+    <p>Open the email and click the link to confirm it is you. The link expires in 24 hours.
+       Then come back and sign in.</p>
+    <p class="small muted">Can't find it? Check your spam or junk folder.</p>
+
+    <form method="post" style="margin-top:18px" data-once>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-outline" type="submit">Resend the link</button>
+      <a class="btn btn-primary" href="{{ url_for('auth.login') }}" style="margin-left:6px">Go to sign in</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

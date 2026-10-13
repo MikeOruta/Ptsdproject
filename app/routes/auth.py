@@ -7,6 +7,8 @@
 - The login page has role tabs, but the SERVER checks the chosen role against
   the account's real role.
 - 5 failed attempts within 15 minutes locks the account for 15 minutes.
+- Self-registered accounts must confirm their email (signed link, see
+  app/mailer.py) before they can sign in.
 """
 import sqlite3
 
@@ -14,6 +16,7 @@ from flask import Blueprint, flash, g, redirect, render_template, request, sessi
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.db import get_db
+from app.mailer import read_verify_token, send_verification_email
 from app.security import ROLE_HOME, ROLES, log_action
 from app.validation import clean_text, validate_email, validate_password
 
@@ -21,6 +24,7 @@ bp = Blueprint("auth", __name__, url_prefix="/auth")
 
 MAX_FAILED_LOGINS = 5
 LOCKOUT_MINUTES = 15
+MAX_VERIFY_EMAILS_PER_HOUR = 3   # stops the resend button being used to spam someone
 
 
 def is_locked_out(email):
@@ -36,6 +40,20 @@ def is_locked_out(email):
 def safe_next(target):
     """Only allow redirects to pages on this site (blocks open-redirect attacks)."""
     return target if target and target.startswith("/") and not target.startswith("//") else None
+
+
+def send_verification(user):
+    """Email a verification link, at most MAX_VERIFY_EMAILS_PER_HOUR times per account."""
+    sent = get_db().execute(
+        """SELECT COUNT(*) FROM system_logs WHERE action = 'verification_sent'
+           AND details = ? AND created_at >= datetime('now', '-1 hour')""",
+        (user["email"],)).fetchone()[0]
+    if sent >= MAX_VERIFY_EMAILS_PER_HOUR:
+        return False
+    if send_verification_email(user["user_id"], user["email"], user["full_name"]):
+        log_action("verification_sent", user["email"], user_id=user["user_id"])
+        return True
+    return False
 
 
 @bp.route("/login", methods=["GET", "POST"])
@@ -63,7 +81,16 @@ def login():
             flash("Incorrect email, password or role.", "error")
             return render_template("auth/login.html", role=role, email=email), 401
 
-        session.clear()                     # new session on login (prevents session fixation)
+        # Checked only after the password is correct, so this message never
+        # reveals to a stranger whether an email is registered.
+        if not user["email_verified"]:
+            log_action("login_unverified", email, user_id=user["user_id"])
+            session["verify_email"] = email
+            flash("Please confirm your email address first. Open the link we sent you, "
+                  "or request a new one below.", "error")
+            return redirect(url_for("auth.check_email"))
+
+        session.clear()                    # new session on login (prevents session fixation)
         session.permanent = True            # applies the 30-minute timeout
         session["user_id"] = user["user_id"]
         db.execute("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE user_id = ?",
@@ -116,9 +143,9 @@ def register():
             db = get_db()
             try:
                 with db:  # users row and profile row are saved together, or not at all
-                    cur = db.execute(
-                        """INSERT INTO users (email, password_hash, full_name, role)
-                           VALUES (?, ?, ?, ?)""",
+                    cur = db.execute(   # email_verified = 0 until the emailed link is opened
+                        """INSERT INTO users (email, password_hash, full_name, role, email_verified)
+                           VALUES (?, ?, ?, ?, 0)""",
                         (form["email"], generate_password_hash(password), form["full_name"], role))
                     if role == "military_personnel":
                         db.execute(
@@ -135,12 +162,52 @@ def register():
                 errors.append("An account with this email, service number or licence number already exists.")
             else:
                 log_action("register", f"role={role} email={form['email']}", user_id=cur.lastrowid)
-                flash("Account created. You can now sign in.", "success")
-                return redirect(url_for("auth.login", role=role))
+                user = db.execute("SELECT * FROM users WHERE user_id = ?", (cur.lastrowid,)).fetchone()
+                if not send_verification(user):
+                    flash("Your account was created, but we could not send the email. "
+                          "Use the button below to try again.", "error")
+                session["verify_email"] = form["email"]
+                return redirect(url_for("auth.check_email"))
 
         for e in errors:
             flash(e, "error")
     return render_template("auth/register.html", form=form, role=role)
+
+
+@bp.route("/check-email", methods=["GET", "POST"])
+def check_email():
+    """'Check your inbox' page, with a button to resend the link."""
+    email = session.get("verify_email")
+    if email is None:
+        return redirect(url_for("auth.login"))
+    if request.method == "POST":
+        user = get_db().execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+        if user is not None and not user["email_verified"]:
+            if send_verification(user):
+                flash("A new confirmation link has been sent.", "success")
+            else:
+                flash("We could not send another email right now. Please try again later.", "error")
+        return redirect(url_for("auth.check_email"))
+    return render_template("auth/check_email.html", email=email)
+
+
+@bp.route("/verify/<token>")
+def verify_email(token):
+    """The link in the email lands here. A valid token marks the email as verified."""
+    data = read_verify_token(token)
+    if data is None:
+        return render_template("auth/verified.html", ok=False), 400
+    user_id, email = data
+    db = get_db()
+    user = db.execute("SELECT * FROM users WHERE user_id = ? AND email = ?", (user_id, email)).fetchone()
+    if user is None:
+        return render_template("auth/verified.html", ok=False), 400
+    if not user["email_verified"]:
+        db.execute("UPDATE users SET email_verified = 1 WHERE user_id = ?", (user_id,))
+        db.commit()
+        log_action("email_verified", email, user_id=user_id)
+    session.pop("verify_email", None)
+    return render_template("auth/verified.html", ok=True, role=user["role"])
 
 
 @bp.route("/logout", methods=["POST"])

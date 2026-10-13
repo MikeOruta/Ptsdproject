@@ -20,6 +20,31 @@ document.addEventListener("DOMContentLoaded", function () {
     btn.addEventListener("click", function () { window.print(); });
   });
 
+  // Show/hide button on every password field, so users can check what they typed.
+  // Switching type between "password" and "text" only changes what is displayed;
+  // the value sent to the server is the same.
+  document.querySelectorAll("input[type=password]").forEach(function (input) {
+    var wrap = document.createElement("div");
+    wrap.className = "password-wrap";
+    input.parentNode.insertBefore(wrap, input);
+    wrap.appendChild(input);
+
+    var btn = document.createElement("button");
+    btn.type = "button";   // not "submit", so clicking it never sends the form
+    btn.className = "password-toggle";
+    btn.textContent = "Show";
+    btn.setAttribute("aria-label", "Show password");
+    wrap.appendChild(btn);
+
+    btn.addEventListener("click", function () {
+      var hidden = input.type === "password";
+      input.type = hidden ? "text" : "password";
+      btn.textContent = hidden ? "Hide" : "Show";
+      btn.setAttribute("aria-label", hidden ? "Hide password" : "Show password");
+      input.focus();
+    });
+  });
+
   // Stop double submission (e.g. saving the same assessment twice).
   document.querySelectorAll("form[data-once]").forEach(function (form) {
     form.addEventListener("submit", function () {

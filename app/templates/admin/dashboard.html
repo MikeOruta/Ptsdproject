@@ -4,6 +4,7 @@
 {% block content %}
 <div class="page-head">
   <div><h1>System overview</h1><p>Accounts, activity and the prediction model at a glance.</p></div>
+  <a class="btn btn-primary" href="{{ url_for('admin.users') }}#new-staff">Add clinician</a>
 </div>
 
 {% if not model_loaded %}
@@ -11,8 +12,8 @@
 {% endif %}
 
 <div class="grid grid-4" style="margin-bottom:20px">
-  <a class="card stat navy" href="{{ url_for('admin.users', role='military_personnel') }}"><div class="label">Service members</div><div class="value">{{ users_by_role.get('military_personnel', 0) }}</div></a>
-  <a class="card stat navy" href="{{ url_for('admin.users', role='therapist') }}"><div class="label">Clinicians</div><div class="value">{{ users_by_role.get('therapist', 0) }}</div></a>
+  <a class="card stat navy" href="{{ url_for('admin.users', role='military_personnel') }}"><div class="label">Service members</div><div class="value">{{ users_by_role.get('military_personnel', 0) }}</div><div class="hint">{{ stats.new_this_week }} new account(s) this week</div></a>
+  <a class="card stat navy" href="{{ url_for('admin.users', role='therapist') }}"><div class="label">Clinicians</div><div class="value">{{ users_by_role.get('therapist', 0) }}</div><div class="hint">{{ stats.signed_in_today }} user(s) signed in today</div></a>
   <div class="card stat navy"><div class="label">Assessments</div><div class="value">{{ stats.assessments }}</div><div class="hint">{{ stats.today }} today</div></div>
   <a class="card stat {{ 'high' if stats.failed_logins > 10 else 'navy' }}" href="{{ url_for('admin.logs', action='login_failed') }}"><div class="label">Failed sign-ins (24h)</div><div class="value">{{ stats.failed_logins }}</div></a>
 </div>
@@ -45,6 +46,44 @@
         <tr><td class="nowrap small">{{ l.created_at[5:16] }}</td><td><span class="pill">{{ l.action }}</span></td><td class="small">{{ l.email or '(anonymous)' }}</td></tr>
       {% else %}
         <tr><td class="muted">No activity yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+</div>
+
+<div class="grid grid-2" style="margin-top:20px">
+  <div class="card">
+    <div class="card-head"><h2>Newly registered</h2><a href="{{ url_for('admin.users') }}">All users</a></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Name</th><th>Role</th><th>Registered</th></tr></thead>
+      <tbody>
+      {% for u in new_users %}
+        <tr>
+          <td><strong>{{ u.full_name }}</strong><div class="small muted">{{ u.email }}</div></td>
+          <td><span class="role-badge {{ u.role }}">{{ role_labels[u.role] }}</span></td>
+          <td class="nowrap small">{{ u.created_at[:16] }}</td>
+        </tr>
+      {% else %}
+        <tr><td class="muted">No accounts yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Recent sign-ins</h2><a href="{{ url_for('admin.logs', action='login') }}">All sign-ins</a></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Name</th><th>Role</th><th>Signed in</th></tr></thead>
+      <tbody>
+      {% for s in sign_ins %}
+        <tr>
+          <td><strong>{{ s.full_name }}</strong><div class="small muted">{{ s.email }}</div></td>
+          <td><span class="role-badge {{ s.role }}">{{ role_labels[s.role] }}</span></td>
+          <td class="nowrap small">{{ s.created_at[:16] }}</td>
+        </tr>
+      {% else %}
+        <tr><td class="muted">No sign-ins yet.</td></tr>
       {% endfor %}
       </tbody>
     </table></div>

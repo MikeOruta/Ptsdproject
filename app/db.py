@@ -22,6 +22,21 @@ def get_db():
     return g.db
 
 
+def upgrade_db(db_path):
+    """Bring an older database up to date without deleting its data.
+    Runs once at startup. Adds users.email_verified if it is missing; existing
+    accounts are treated as verified (DEFAULT 1) so nobody is locked out."""
+    conn = sqlite3.connect(db_path)
+    try:
+        columns = [row[1] for row in conn.execute("PRAGMA table_info(users)")]
+        if columns and "email_verified" not in columns:
+            conn.execute("ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 1 "
+                         "CHECK (email_verified IN (0,1))")
+            conn.commit()
+    finally:
+        conn.close()
+
+
 def close_db(error=None):
     """Close the connection at the end of the request (if one was opened)."""
     db = g.pop("db", None)

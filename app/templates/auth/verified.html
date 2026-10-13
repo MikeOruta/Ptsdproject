@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Email verified' if ok else 'Link not valid' }}{% endblock %}
+{% block content %}
+<div style="max-width:560px;margin:0 auto">
+  {% if ok %}
+    <div class="page-head"><div>
+      <h1>Email verified</h1>
+      <p>Thank you. Your email address is confirmed.</p>
+    </div></div>
+    <div class="card">
+      <div class="alert alert-success" style="margin-bottom:16px"><strong>Verified.</strong> Your account is now active.</div>
+      <p>You can now sign in with your email and password.</p>
+      <a class="btn btn-primary" href="{{ url_for('auth.login', role=role) }}">Sign in now</a>
+    </div>
+  {% else %}
+    <div class="page-head"><div>
+      <h1>Link not valid</h1>
+      <p>This confirmation link is invalid or has expired.</p>
+    </div></div>
+    <div class="card">
+      <p>Try signing in. If your email is still unconfirmed, you will be able to request a new link.</p>
+      <a class="btn btn-primary" href="{{ url_for('auth.login') }}">Go to sign in</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
