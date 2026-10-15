@@ -58,7 +58,12 @@ def send_verification(user):
 
 @bp.route("/login", methods=["GET", "POST"])
 def login():
-    role = request.values.get("role", "military_personnel")
+    # On submit, the role chosen in the form's "Access as" dropdown wins over the
+    # ?role= in the address (which is only the default tab the page opened on).
+    if request.method == "POST":
+        role = request.form.get("role") or request.args.get("role", "military_personnel")
+    else:
+        role = request.args.get("role", "military_personnel")
     valid_roles = ("military_personnel", "therapist", "administrator")
     if role not in valid_roles:
         role = "military_personnel"

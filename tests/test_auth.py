@@ -68,6 +68,14 @@ def test_therapist_register_then_login(client, app):
     assert r.status_code == 302 and "/therapist" in r.headers["Location"]
 
 
+def test_dropdown_role_overrides_page_default(client, make_user):
+    """Page opened as Service Member, but 'Mental Health Professional' picked in the dropdown."""
+    make_user("doc@example.org", "therapist")
+    r = client.post("/auth/login?role=military_personnel",
+                    data={"email": "doc@example.org", "password": PASSWORD, "role": "therapist"})
+    assert r.status_code == 302 and "/therapist" in r.headers["Location"]
+
+
 def test_password_is_hashed_not_plain(client, app):
     client.post("/auth/register", data=REGISTRATION)
     stored = sqlite3.connect(app.config["DB_PATH"]).execute(
