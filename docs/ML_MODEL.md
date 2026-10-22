@@ -102,6 +102,13 @@ generate the data (e.g. combat exposure 1.249 learned vs 1.25 true; sleep
 1.216 vs 1.20; alcohol 1.040 vs 1.04), showing the pipeline recovers real
 relationships. Feature selection dropped `gender_female` (not significant).
 
+**Per-record output: `data/synthetic_predictions.csv`.** For each of the 2,000
+cleaned synthetic records: whether it was in the `train` or `test` set, its
+features, the actual outcome (`actual_ptsd`), the model's
+`predicted_probability` and the resulting `risk_category`. Judge the model only
+on the `test` rows; it learned from the `train` rows, so those look better than
+reality. This file is only written for synthetic data, never for real people.
+
 ## 6. In the web app
 
 `app/ml_service.py` loads the active model **once** at startup. For each

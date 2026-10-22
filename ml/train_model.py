@@ -48,6 +48,7 @@ DEFAULT_DATA = PROJECT_ROOT / "data" / "synthetic_ptsd_dataset.csv"
 MODEL_VERSION = "v1"
 MODEL_FILE = PROJECT_ROOT / "ml" / f"model_{MODEL_VERSION}.pkl"
 METRICS_FILE = PROJECT_ROOT / "ml" / f"metrics_{MODEL_VERSION}.json"
+PREDICTIONS_FILE = PROJECT_ROOT / "data" / "synthetic_predictions.csv"
 RANDOM_SEED = 42
 METRIC_NAMES = ["accuracy", "precision", "recall", "f1", "roc_auc"]
 
@@ -152,6 +153,24 @@ def odds_ratios(pipeline):
     return sorted(rows, key=lambda r: abs(np.log(r["odds_ratio"])), reverse=True)
 
 
+def save_predictions(pipeline, X_train, X_test, y_train, y_test, out_file=PREDICTIONS_FILE):
+    """Write the model's output for every cleaned record to a CSV, so it can be
+    inspected next to the data: actual outcome, predicted probability, risk category.
+    'set' says whether the model learned from the row (train) or never saw it (test).
+    Only the TEST rows show honest performance; train rows are optimistic."""
+    parts = []
+    for name, X, y in (("test", X_test, y_test), ("train", X_train, y_train)):
+        out = X.copy()
+        out.insert(0, "set", name)
+        out["actual_ptsd"] = y
+        prob = pipeline.predict_proba(X)[:, 1]
+        out["predicted_probability"] = prob.round(3)
+        out["risk_category"] = [risk_category(p) for p in prob]   # from the unrounded value
+        parts.append(out)
+    pd.concat(parts).to_csv(out_file, index_label="row")
+    return out_file
+
+
 def register_model(metrics):
     """Store the model in the ml_models table and make it the only active one."""
     load_dotenv(PROJECT_ROOT / ".env")
@@ -248,6 +267,9 @@ def main():
     joblib.dump(pipeline, MODEL_FILE)
     METRICS_FILE.write_text(json.dumps(metrics, indent=2))
     print(f"Step 8  Saved {MODEL_FILE.name} and {METRICS_FILE.name}")
+    if synthetic:   # never write real people's predictions to a plain CSV
+        save_predictions(pipeline, X_train, X_test, y_train, y_test)
+        print(f"        Saved per-record probabilities to data/{PREDICTIONS_FILE.name}")
     register_model(metrics)
 
 
