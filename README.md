@@ -27,15 +27,15 @@ frameworks or external services, for low-resource environments.
 ## Run it on your computer (Windows PowerShell)
 
 ```powershell
-cd $HOME\OneDrive\Desktop\ptsd-system
-python -m venv venv
-.\venv\Scripts\python.exe -m pip install -r requirements.txt
+cd "D:\Final year Project\Ptsdproject"
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
 copy .env.example .env          # then set SECRET_KEY (and DEMO_PASSWORD for demo data)
-.\venv\Scripts\python.exe db\init_db.py                  # create the 10 tables
-.\venv\Scripts\python.exe -m ml.generate_synthetic_data  # create the synthetic dataset
-.\venv\Scripts\python.exe -m ml.train_model              # train + register the model
-.\venv\Scripts\python.exe -m db.seed_demo                # optional: fictional demo accounts
-.\venv\Scripts\python.exe run.py                         # open http://127.0.0.1:5000
+.\.venv\Scripts\python.exe db\init_db.py                  # create the 10 tables
+.\.venv\Scripts\python.exe -m ml.generate_synthetic_data  # create the synthetic dataset
+.\.venv\Scripts\python.exe -m ml.train_model              # train + register the model
+.\.venv\Scripts\python.exe -m db.seed_demo                # optional: fictional demo accounts
+.\.venv\Scripts\python.exe run.py                         # open http://127.0.0.1:5000
 ```
 
 After setup, you can simply double-click **`start_server.bat`**. It starts the
@@ -44,13 +44,13 @@ server and opens the sign-in page; keep its window open while using the site.
 Create a real administrator (password typed privately):
 
 ```powershell
-.\venv\Scripts\python.exe -m db.create_user --role administrator --email you@example.org --name "Your Name"
+.\.venv\Scripts\python.exe -m db.create_user --role administrator --email you@example.org --name "Your Name"
 ```
 
-Run the tests (37 tests: authentication, RBAC, prediction):
+Run the tests (42 tests: authentication, email verification, RBAC, prediction):
 
 ```powershell
-.\venv\Scripts\python.exe -m pytest
+.\.venv\Scripts\python.exe -m pytest
 ```
 
 ## Project structure
@@ -61,11 +61,14 @@ app/            Flask application
   templates/    Jinja2 pages          static/  CSS, JS, SVG images
   security.py   RBAC decorators, CSRF, audit log, headers
   ml_service.py loads the model once; predicts and explains
+  mailer.py     signed email-verification links, sent over SMTP
 ml/             features.py, generate_synthetic_data.py, train_model.py, metrics_v1.json
 db/             schema.sql, init_db.py, create_user.py, seed_demo.py
-data/           synthetic_ptsd_dataset.csv
+data/           synthetic_ptsd_dataset.csv, synthetic_predictions.csv
 tests/          pytest suite
 docs/           DEVELOPMENT_LOG, ML_MODEL, ETHICS, DEPLOYMENT
+run.py          starts the server and prints the sign-in links
+start_server.bat  double-click launcher for Windows
 ```
 
 ## Documentation
