@@ -38,6 +38,9 @@ copy .env.example .env          # then set SECRET_KEY (and DEMO_PASSWORD for dem
 .\venv\Scripts\python.exe run.py                         # open http://127.0.0.1:5000
 ```
 
+After setup, you can simply double-click **`start_server.bat`**. It starts the
+server and opens the sign-in page; keep its window open while using the site.
+
 Create a real administrator (password typed privately):
 
 ```powershell
